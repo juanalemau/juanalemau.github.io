@@ -1,39 +1,94 @@
-# Resumen diario para devs: recolecta fuentes públicas y Gemini resume en es/pt/en.
-# Etapa de prueba: en cada PR que toca el pipeline genera el resumen de hoy como VISTA PREVIA
-# (resumen del job + artefacto), sin publicar nada.
+# Resumen diario para devs (scripts/resumen_diario.py): Gemini redacta, Gemini revisa,
+# el código verifica números y enlaces. Falla cerrada: si no hay suficientes ítems válidos, no publica.
+#  - schedule / manual: guarda el resumen en la rama "resumenes" y publica el sitio.
+#  - pull_request: solo vista previa (resumen del job + artefacto), no publica.
 name: Resumen diario
 
 on:
+  schedule:
+    - cron: "0 9 * * *" # 06:00 en Brasil (UTC-3)
+    - cron: "0 12 * * *" # 09:00: reintento si el de las 06:00 no salió
+    - cron: "0 15 * * *" # 12:00: último reintento del día
+  workflow_dispatch:
   pull_request:
     paths:
       - "scripts/resumen_diario.py"
       - "scripts/fuentes.json"
       - ".github/workflows/resumen-diario.yml"
-  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: resumen-diario
+  cancel-in-progress: false
+
 jobs:
-  vista-previa:
+  generar:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # solo para empujar a la rama "resumenes" (main sigue protegida)
+    outputs:
+      publicado: ${{ steps.guardar.outputs.publicado }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Generar resumen (Gemini)
+      - name: Historial (rama resumenes)
+        run: |
+          if git ls-remote --exit-code --heads origin resumenes >/dev/null; then
+            git clone --quiet --depth 1 --branch resumenes "https://github.com/${GITHUB_REPOSITORY}.git" resumenes
+          else
+            mkdir -p resumenes/content
+          fi
+      - name: ¿Ya se publicó hoy?
+        id: hoy
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ -f "resumenes/content/es/diario/$(date -u +%F).md" ]; then
+            echo "listo=true" >> "$GITHUB_OUTPUT"; echo "El resumen de hoy ya existe: nada que hacer."
+          fi
+      - name: Generar y revisar resumen (Gemini)
+        if: steps.hoy.outputs.listo != 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/resumen_diario.py --salida vista-previa
-      - name: Mostrar en el resumen del job
+        run: python3 scripts/resumen_diario.py --historial resumenes/content --salida salida --informe informe.json
+      - name: Vista previa en el resumen del job
+        if: always()
         run: |
-          for l in es pt en; do
-            echo "# $l" >> "$GITHUB_STEP_SUMMARY"
-            cat vista-previa/$l/diario/*.md >> "$GITHUB_STEP_SUMMARY"
-          done
+          { echo '## Informe'; echo '```json'; cat informe.json 2>/dev/null || echo '{}'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          for f in salida/*/diario/*.md; do [ -f "$f" ] && { echo "## $f"; cat "$f"; } >> "$GITHUB_STEP_SUMMARY"; done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
         with:
-          name: resumen-vista-previa
-          path: vista-previa
-          retention-days: 7
+          name: resumen-${{ github.run_id }}
+          path: |
+            salida
+            informe.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Guardar en la rama resumenes
+        id: guardar
+        if: github.event_name != 'pull_request' && steps.hoy.outputs.listo != 'true'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          cd resumenes
+          if [ ! -d .git ]; then git init -q -b resumenes; fi
+          mkdir -p content && cp -r ../salida/* content/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content
+          if git diff --cached --quiet; then echo "publicado=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git commit -q -m "feat(diario): resumen del $(date -u +%F)"
+          git push -q "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:resumenes
+          echo "publicado=true" >> "$GITHUB_OUTPUT"
+
+  publicar:
+    needs: generar
+    if: github.event_name != 'pull_request' && needs.generar.outputs.publicado == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/deploy.yml

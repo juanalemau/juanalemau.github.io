@@ -24,3 +24,4 @@ Detalle en `docs/proyecto/plan-editorial.md`.
 - 2026-11-23 — release-please arranca en 47b4196 (`bootstrap-sha`). — Sin eso incluía todo el historial de Quartz en el CHANGELOG. —
 
 - 2026-11-23 — Monograma alemau al lado del título del sitio (`monograma.svg`; en oscuro `monograma-oscuro.svg`, versión clara con cursor #F0566B por contraste). — Identidad de marca dentro del sitio, no solo en el favicon. —
+- 2026-11-24 — Cambio de rumbo: el blog es un **resumen diario para devs de todo el mundo** (GitHub, HN, dev.to, Medium, blogs; sin X por ahora). Gemini (plan gratis) redacta y revisa; Qwen local descartado tras prueba (inventó datos). Calidad en 4 capas (reglas, números, revisor, falla cerrada). Publicación automática 06:00 BRT con reintentos 09:00/12:00; resúmenes en la rama `resumenes` (main sigue protegida). OmniRoute descartado por ahora (requiere cuentas por proveedor). — Pedido de Juan. — Artículo sobre cómo se hizo el blog (convertido en página Sobre).
