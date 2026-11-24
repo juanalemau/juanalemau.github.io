@@ -23,3 +23,4 @@ Detalle en `docs/proyecto/plan-editorial.md`.
 - 2026-11-23 — Favicon y og-image con el monograma de la marca alemau. — Identidad propia. —
 - 2026-11-23 — release-please arranca en 47b4196 (`bootstrap-sha`). — Sin eso incluía todo el historial de Quartz en el CHANGELOG. —
 
+- 2026-11-23 — Monograma alemau al lado del título del sitio (`monograma.svg`; en oscuro `monograma-oscuro.svg`, versión clara con cursor #F0566B por contraste). — Identidad de marca dentro del sitio, no solo en el favicon. —
