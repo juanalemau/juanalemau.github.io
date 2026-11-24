@@ -1,4 +1,5 @@
-# Valida nombre de rama, título del PR (Conventional Commits) y que el sitio compile.
+# Valida nombre de rama, título del PR y cada commit (Conventional Commits 1.0.0:
+# https://www.conventionalcommits.org/es/v1.0.0/) y que el sitio compile.
 name: Verificaciones del PR
 
 on:
@@ -16,18 +17,34 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test|ci|content)/[0-9]+-[a-z0-9-]+$ && ! "$BRANCH" =~ ^dependabot/ ]]; then
-            echo "::error::La rama '$BRANCH' no sigue el formato <tipo>/<n°-issue>-<descripcion> (ej.: content/3-ia-para-devs)"
+          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|style)/[0-9]+-[a-z0-9-]+$ && ! "$BRANCH" =~ ^dependabot/ ]]; then
+            echo "::error::La rama '$BRANCH' no sigue el formato <tipo>/<n°-issue>-<descripcion> (ej.: feat/3-articulo-agentes-ia)"
             exit 1
           fi
       - name: Título del PR
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ ! "$TITLE" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|content)(\([a-z0-9-]+\))?!?:\ .+ ]]; then
-            echo "::error::El título '$TITLE' no sigue Conventional Commits (ej.: content(ia): agentes de código en 2026)"
+          if [[ ! "$TITLE" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9-]+\))?!?:\ .+ ]]; then
+            echo "::error::El título '$TITLE' no sigue Conventional Commits (ej.: feat(contenido): artículo sobre agentes de IA)"
             exit 1
           fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Mensajes de commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          re='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9-]+\))?!?: .+'
+          bad=0
+          while IFS= read -r msg; do
+            [[ "$msg" =~ ^Merge\  ]] && continue
+            if [[ ! "$msg" =~ $re ]]; then echo "::error::Commit fuera de Conventional Commits: $msg"; bad=1; fi
+          done < <(git log --format=%s "$BASE..$HEAD")
+          exit $bad
 
   build:
     runs-on: ubuntu-latest

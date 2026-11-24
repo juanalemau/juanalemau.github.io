@@ -1,4 +1,5 @@
 ---
+lang: pt
 title: Português
 description: Tecnologia, software, hardware e IA explicados com exemplos claros.
 ---

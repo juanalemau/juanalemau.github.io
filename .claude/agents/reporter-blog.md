@@ -23,3 +23,5 @@ translations: { es: "[[es/…]]", pt: "[[pt/…]]", en: "[[en/…]]" }
 ---
 ```
 Las versiones pt y en se adaptan (expresiones naturales), no se traducen literalmente. Al final, una sección "Fuentes".
+
+Al proponer el commit: `feat(contenido): <título corto>` (Conventional Commits 1.0.0).

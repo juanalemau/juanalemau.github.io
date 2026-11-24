@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "alemau-blog",
+      "changelog-path": "docs/proyecto/CHANGELOG.md",
+      "include-component-in-tag": false,
+      "bump-minor-pre-major": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "Novedades" },
+        { "type": "fix", "section": "Correcciones" },
+        { "type": "perf", "section": "Rendimiento" },
+        { "type": "docs", "section": "Documentación" },
+        { "type": "revert", "section": "Reversiones" },
+        { "type": "chore", "section": "Mantenimiento", "hidden": true },
+        { "type": "ci", "section": "CI", "hidden": true },
+        { "type": "build", "section": "Build", "hidden": true },
+        { "type": "refactor", "section": "Refactor", "hidden": true },
+        { "type": "style", "section": "Estilo", "hidden": true },
+        { "type": "test", "section": "Pruebas", "hidden": true }
+      ]
+    }
+  }
+}

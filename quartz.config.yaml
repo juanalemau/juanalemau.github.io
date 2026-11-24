@@ -22,17 +22,17 @@ configuration:
       lightMode:
         light: "#fbfaf7"
         lightgray: "#e5e5e5"
-        gray: "#b8b8b8"
+        gray: "#5c6080"
         darkgray: "#4e4e4e"
         dark: "#161A44"
         secondary: "#C8102E"
-        tertiary: "#B5810F"
+        tertiary: "#8C6200"
         highlight: rgba(143, 159, 169, 0.15)
         textHighlight: "#E5A11C55"
       darkMode:
         light: "#10132f"
         lightgray: "#2a2e5c"
-        gray: "#646464"
+        gray: "#8a8fb0"
         darkgray: "#d4d4d4"
         dark: "#eef0fb"
         secondary: "#F0566B"

@@ -4,9 +4,12 @@ Blog público y trilingüe (es principal, pt, en) de Juan Alemau sobre tecnolog�
 
 ## Reglas
 - **Respeto a la autoría:** Quartz es de jackyzha0 y comunidad (MIT). No borrar `LICENSE.txt`, el historial de upstream ni el crédito del pie de página. Cambios en `quartz/` deben ser mínimos y documentados; preferir configuración (`quartz.config.yaml`) o plugins.
-- **Repositorio público:** nada de datos personales, rutas privadas, correos, tokens ni notas de `Gestão/` del Obsidian. Revisar antes de cada commit.
+- **Repositorio público:** nada de datos personales, rutas privadas, correos, tokens ni notas privadas. Revisar antes de cada commit.
 - **Contenido:** cada artículo existe en los tres idiomas con el mismo nombre de archivo en `content/{es,pt,en}/<sección>/`, enlazados entre sí (`translations:` en el frontmatter). Fuentes citadas con enlace; fecha en `date:`; nada inventado: si un dato no se pudo verificar, se dice.
 - **Actualizaciones:** solo versiones de Quartz/actions con ≥ 2 semanas de publicadas. Actions fijadas por SHA.
+- **Git:** todo commit y título de PR sigue [Conventional Commits 1.0.0](https://www.conventionalcommits.org/es/v1.0.0/) (`tipo(alcance): descripción`; tipos feat, fix, docs, chore, refactor, perf, ci, build, style, test, revert; `!` o `BREAKING CHANGE:` para cambios incompatibles). Artículo nuevo = `feat(contenido): …`, corrección de artículo = `fix(contenido): …`, cambio del sitio = `feat(sitio)`/`fix(sitio)`. Lo validan el hook local `commit-msg` y el workflow `pr-checks.yml`.
+- Nada de commit directo a `main`: rama `<tipo>/<n°-issue>-<descripcion>` → PR → squash. Las versiones las crea **release-please** (`release.yml`) a partir de los commits: abre un PR de release (cerrarlo y reabrirlo para que corran los checks); al hacer merge se crea el tag, el GitHub Release y `docs/proyecto/CHANGELOG.md`.
+- Tablero: GitHub Project "Blog alemau" (https://github.com/users/juanalemau/projects/6), Status: A fazer / Dúvida pendente / Em andamento / Feito.
 - Disco NTFS: `core.fileMode false`.
 - Commits con el email noreply de GitHub; nunca el email personal.
 
