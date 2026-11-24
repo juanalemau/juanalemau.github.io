@@ -195,6 +195,31 @@ def recolectar() -> list[dict]:
     return todos
 
 
+# ---------------------------------------------------------------- capa 1b: seguridad (solo noticias)
+REPOS = re.compile(r"^https?://(www\.)?(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org|gist\.github\.com|huggingface\.co)/", re.I)
+PELIGRO = re.compile(
+    r"\b(exploit\w*|0-?day|zero[- ]day|poc|proof[- ]of[- ]concept|cve-\d{4}-\d+|bypass\w*|rce|lpe|privilege escalation|"
+    r"rootkit|(info)?stealer|keylogger|ransomware|botnet|ddos|c2|command and control|backdoor|payload|shellcode|"
+    r"crack(ed|s)?|keygen|cheat\w*|aimbot|spoofer|injector|phishing|brute[- ]?force|account checker|"
+    r"free premium|unlocked|jailbreak)\b", re.I)
+DOMINIOS_BLOQUEADOS = re.compile(
+    r"^https?://([^/]*\.)?(mediafire\.com|mega\.nz|anonfiles\.\w+|gofile\.io|pastebin\.com|bit\.ly|tinyurl\.com|"
+    r"t\.me|discord\.gg|grabify\.link|iplogger\.\w+)(/|$)", re.I)
+BINARIO = re.compile(r"\.(exe|msi|apk|zip|rar|7z|dmg|iso|bat|ps1|scr|jar|bin)(\?|$)", re.I)
+
+
+def peligro(c: dict) -> str | None:
+    """Regla de Juan: seguridad solo como noticia. Nunca repos de ataque ni enlaces peligrosos."""
+    url = c["url"]
+    if DOMINIOS_BLOQUEADOS.match(url) or BINARIO.search(url.split("#")[0]):
+        return "enlace de descarga/acortador/dominio bloqueado"
+    if REPOS.match(url):
+        m = PELIGRO.search(f"{c['titulo']} {c['contexto'][:600]}")
+        if m:
+            return f"repo con contenido de ataque ('{m.group(0)}')"
+    return None
+
+
 def urls_publicadas(historial: Path | None) -> set[str]:
     if not historial or not historial.exists():
         return set()
@@ -258,6 +283,9 @@ Recibes candidatos de fuentes públicas, cada uno con un id y su CONTEXTO real.
    tecnología/desarrollo (ciencia general, política, deportes) y el autobombo sin contenido.
    DESCARTA repos sospechosos (cracks, "emuladores" de consolas o juegos no lanzados, bots de
    trampas, "ultimate/free premium" tools, descargas de binarios sin código): suelen ser malware.
+   SEGURIDAD = SOLO NOTICIAS: un tema de seguridad entra únicamente si la fuente es un medio, blog
+   o aviso oficial (parches, incidentes, análisis). NUNCA elijas repos, PoC, exploits, 0-days,
+   bypasses, herramientas de ataque ni nada que enseñe a atacar o enlace a código ofensivo.
 2. Para cada elegido escribe en español, portugués de Brasil e inglés:
    - "titulo": título claro (traducido/adaptado, sin clickbait).
    - "resumen": 1-2 frases sobre QUÉ es, basadas SOLO en el contexto dado.
@@ -279,7 +307,9 @@ y los textos escritos en es/pt/en. Un ítem está "apoyado" solo si TODAS sus af
 quién lo hizo, qué hace, versiones, cifras, fechas) se desprenden del contexto en los tres idiomas.
 Una opinión razonable en "importa" sobre para quién sirve está permitida si no contradice el contexto.
 Marca "apoyado": false ante cualquier dato inventado, exagerado, contradictorio o traducido con
-otro significado. Sé estricto y breve.
+otro significado. Marca también "apoyado": false si el ítem enlaza o promueve un exploit, PoC,
+0-day, herramienta de ataque, malware, cracks/trampas o descargas sospechosas (en seguridad solo
+se aceptan noticias y avisos). Sé estricto y breve.
 
 Responde SOLO JSON: [{{"id":0,"apoyado":true,"motivo":""}}]
 
@@ -394,6 +424,10 @@ def main() -> None:
     candidatos = recolectar()
     ya = urls_publicadas(a.historial)
     candidatos = [c for c in candidatos if c["url"].rstrip("/").lower() not in ya]
+    bloqueados = [(c["titulo"], peligro(c)) for c in candidatos if peligro(c)]
+    for titulo, motivo in bloqueados:
+        avisar(f"bloqueado por seguridad: {titulo} — {motivo}")
+    candidatos = [c for c in candidatos if not peligro(c)]
     conteo: dict[str, int] = {}
     for c in candidatos:
         conteo[c["fuente"]] = conteo.get(c["fuente"], 0) + 1
