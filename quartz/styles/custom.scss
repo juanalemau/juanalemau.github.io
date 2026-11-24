@@ -1,3 +1,76 @@
 @use "./variables.scss" as *;
 
-// put your custom CSS here!
+// alemau — fuentes autoalojadas (OFL, ver static/fonts/OFL-*.txt): sin Google Fonts.
+@mixin face($family, $file, $weight, $style: normal) {
+  @font-face {
+    font-family: $family;
+    src: url("/static/fonts/#{$file}.woff2") format("woff2");
+    font-weight: $weight;
+    font-style: $style;
+    font-display: swap;
+  }
+}
+@each $w in 400, 600, 700 {
+  @include face("Unbounded", "unbounded-latin-#{$w}-normal", $w);
+  @include face("IBM Plex Sans", "ibm-plex-sans-latin-#{$w}-normal", $w);
+  @include face("IBM Plex Mono", "ibm-plex-mono-latin-#{$w}-normal", $w);
+}
+@include face("IBM Plex Sans", "ibm-plex-sans-latin-400-italic", 400, italic);
+@include face("IBM Plex Mono", "ibm-plex-mono-latin-400-italic", 400, italic);
+
+// alemau — portada con tres tarjetas por idioma
+.idiomas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+
+  a.idioma {
+    display: block;
+    min-height: 44px;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 10px;
+    color: var(--dark);
+    background: var(--light);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--secondary);
+      transform: translateY(-2px);
+    }
+
+    strong {
+      display: block;
+      font-family: var(--headerFont);
+      font-size: 1.1rem;
+      color: var(--secondary);
+      margin-bottom: 0.35rem;
+    }
+
+    span {
+      color: var(--darkgray);
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+  }
+}
+
+// alemau — el explorer muestra solo la carpeta del idioma de la página actual.
+// Se hace con CSS (no con filterFn) para no tener que permitir 'unsafe-eval' en la CSP
+// (el explorer evalúa sus funciones como texto; sin 'unsafe-eval' usa su orden por defecto).
+.explorer li:has(> [data-folderpath^="tags/"]) {
+  display: none;
+}
+$idiomas: es, pt, en;
+@each $actual in $idiomas {
+  @each $otro in $idiomas {
+    @if $actual != $otro {
+      body[data-slug^="#{$actual}/"] .explorer li:has(> [data-folderpath^="#{$otro}/"]) {
+        display: none;
+      }
+    }
+  }
+}
