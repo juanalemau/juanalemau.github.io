@@ -1,0 +1,44 @@
+# Valida nombre de rama, título del PR (Conventional Commits) y que el sitio compile.
+name: Verificaciones del PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  convenciones:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nombre de la rama
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test|ci|content)/[0-9]+-[a-z0-9-]+$ && ! "$BRANCH" =~ ^dependabot/ ]]; then
+            echo "::error::La rama '$BRANCH' no sigue el formato <tipo>/<n°-issue>-<descripcion> (ej.: content/3-ia-para-devs)"
+            exit 1
+          fi
+      - name: Título del PR
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! "$TITLE" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|content)(\([a-z0-9-]+\))?!?:\ .+ ]]; then
+            echo "::error::El título '$TITLE' no sigue Conventional Commits (ej.: content(ia): agentes de código en 2026)"
+            exit 1
+          fi
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+      - run: npm ci --no-audit --no-fund
+      - run: npx quartz plugin install
+      - run: npx quartz build

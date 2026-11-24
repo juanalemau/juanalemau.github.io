@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     # Plugins declare these as peer dependencies (preact by 42 plugins, vfile by 15), so a
     # major bump here passes `npm ci` but breaks plugins at runtime (#2586). Upgrade them
     # deliberately, together with the plugins.
@@ -37,7 +37,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       ci-dependencies:
         applies-to: "version-updates"

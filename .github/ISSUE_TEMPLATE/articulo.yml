@@ -1,0 +1,22 @@
+name: Artículo
+description: Idea o pauta de un artículo nuevo
+labels: [contenido]
+body:
+  - type: input
+    id: titulo
+    attributes: { label: Título provisional }
+    validations: { required: true }
+  - type: dropdown
+    id: seccion
+    attributes:
+      label: Sección
+      options: [IA y desarrollo, Software, Hardware, Mercado tech]
+    validations: { required: true }
+  - type: textarea
+    id: decision
+    attributes:
+      label: ¿Qué decisión ayuda a tomar al lector?
+    validations: { required: true }
+  - type: textarea
+    id: fuentes
+    attributes: { label: Fuentes iniciales }

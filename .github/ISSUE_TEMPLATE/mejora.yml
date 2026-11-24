@@ -1,0 +1,11 @@
+name: Mejora o error del sitio
+description: Algo del sitio que falla o se puede mejorar
+labels: [sitio]
+body:
+  - type: textarea
+    id: que
+    attributes: { label: ¿Qué pasa o qué quieres mejorar? }
+    validations: { required: true }
+  - type: textarea
+    id: donde
+    attributes: { label: Página / dispositivo / navegador }
