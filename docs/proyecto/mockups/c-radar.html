@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>alemau — C · radar</title>
+<style>
+@font-face{font-family:"Unbounded";src:url("../../../quartz/static/fonts/unbounded-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Unbounded";src:url("../../../quartz/static/fonts/unbounded-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../../../quartz/static/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../../../quartz/static/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../../../quartz/static/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../../../quartz/static/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+
+/* Direção C — "Radar": o dia como um painel de sinais. A grade de pixels do monograma
+   vira a linguagem visual: cada item tem um medidor de 5 quadrados. Filtro só com CSS. */
+:root{
+  --bg:#fbfaf7; --panel:#ffffff; --line:#e2dfd6; --line-2:#cfcabd;
+  --ink:#161A44; --ink-2:#3a3e66; --muted:#5c6080;
+  --red:#C8102E; --gold:#8C6200; --gold-fill:#E5A11C; --off:#e6e4ee;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --head:"Unbounded",var(--sans);
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0d1029;--panel:#141838;--line:#262b57;--line-2:#363c74;--ink:#eef0fb;--ink-2:#c3c7e2;--muted:#8a8fb0;--red:#F0566B;--gold:#E5A11C;--off:#262b57}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--sans)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:8px;background:var(--ink);color:var(--bg);padding:6px 10px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+
+/* ── cabeçalho ──────────────────────────────────────── */
+.hd{background:#161A44;color:#eef0fb}
+.hd .wrap{display:flex;align-items:center;gap:20px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand svg{width:20px;height:24px}
+.brand b{font:700 17px/1 var(--head);letter-spacing:-.01em}
+.hd .crumb{font:400 13px/1 var(--mono);color:#b9bdd8}
+.hd .crumb b{color:#E5A11C;font-weight:600}
+.hd nav{margin-left:auto;display:flex;gap:4px}
+.hd nav a{font:600 12px/1 var(--mono);text-transform:uppercase;text-decoration:none;color:#b9bdd8;padding:10px 11px;border:1px solid transparent;border-radius:4px;min-width:44px;text-align:center}
+.hd nav a[aria-current]{color:#161A44;background:#E5A11C}
+.hd nav a:hover{border-color:#3a3f7a;color:#fff}
+
+/* ── faixa do dia: matriz de sinais ─────────────────── */
+.day{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;padding:32px 0 24px;border-bottom:1px solid var(--line)}
+.day h1{margin:0;font:700 clamp(24px,3vw,36px)/1.1 var(--head);letter-spacing:-.025em}
+.day h1 span{color:var(--red)}
+.day p{margin:10px 0 0;color:var(--ink-2);max-width:60ch}
+.kpis{display:flex;gap:22px;margin-top:16px;font:400 12px/1.3 var(--mono);color:var(--muted)}
+.kpis b{display:block;font:600 20px/1.1 var(--mono);color:var(--ink)}
+
+.matrix{display:grid;grid-template-columns:repeat(9,18px);gap:4px;padding:12px;border:1px solid var(--line);background:var(--panel)}
+.matrix a{display:grid;grid-template-rows:repeat(5,18px);gap:4px;text-decoration:none}
+.matrix i{display:block;background:var(--off)}
+.matrix a i.on{background:var(--ink)}
+.matrix a.hot i.on{background:var(--red)}
+.matrix a:hover i.on{background:var(--gold-fill)}
+.matrix-cap{grid-column:1/-1;font:400 11px/1.3 var(--mono);color:var(--muted);margin-top:6px}
+
+/* ── filtro (CSS puro: radios + :checked) ───────────── */
+.flt{position:absolute;opacity:0;pointer-events:none}
+.bar{display:flex;align-items:center;gap:8px;padding:16px 0;flex-wrap:wrap}
+.bar .lbl{font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-right:4px}
+.bar label{font:600 13px/1 var(--mono);padding:11px 14px;border:1px solid var(--line-2);border-radius:999px;cursor:pointer;background:var(--panel)}
+.bar label span{color:var(--muted);font-weight:400;margin-left:4px}
+#f-all:checked ~ .bar [for=f-all],#f-gh:checked ~ .bar [for=f-gh],#f-hn:checked ~ .bar [for=f-hn]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#f-all:checked ~ .bar [for=f-all] span,#f-gh:checked ~ .bar [for=f-gh] span,#f-hn:checked ~ .bar [for=f-hn] span{color:inherit;opacity:.75}
+#f-all:focus-visible ~ .bar [for=f-all],#f-gh:focus-visible ~ .bar [for=f-gh],#f-hn:focus-visible ~ .bar [for=f-hn]{outline:2px solid var(--red);outline-offset:2px}
+#f-gh:checked ~ .cards .card:not([data-src=gh]),#f-hn:checked ~ .cards .card:not([data-src=hn]){display:none}
+.bar .sort{margin-left:auto;font:400 12px/1 var(--mono);color:var(--muted)}
+
+/* ── cartões ────────────────────────────────────────── */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding-bottom:56px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);padding:16px 16px 12px;scroll-margin-top:12px}
+.card:target{border-color:var(--red);box-shadow:inset 3px 0 0 var(--red)}
+.card.wide{grid-column:span 2}
+.row{display:flex;align-items:center;gap:8px;font:600 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.rank{font:700 13px/1 var(--head);color:var(--muted);letter-spacing:0;margin-right:2px}
+.src{padding:4px 6px;border:1px solid var(--line-2);color:var(--ink)}
+.src.gh{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cat{color:var(--red)}
+.meter{margin-left:auto;display:flex;gap:2px}
+.meter i{width:9px;height:9px;background:var(--off)}
+.meter i.on{background:var(--ink)}
+.card.hot .meter i.on{background:var(--red)}
+.card h2{margin:12px 0 0;font:600 17px/1.3 var(--sans);letter-spacing:-.005em}
+.card.wide h2{font:600 22px/1.2 var(--head);letter-spacing:-.025em}
+.card h2 a{text-decoration:none}
+.card h2 a::after{content:"";position:absolute;inset:0}
+.card h2 a:hover{text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:3px}
+.card p{margin:8px 0 0;color:var(--ink-2);font-size:14.5px}
+.why{display:flex;gap:8px;margin-top:10px !important;color:var(--ink) !important}
+.why::before{content:"→";font:600 14px/1.45 var(--mono);color:var(--gold)}
+.foot{margin-top:auto;padding-top:12px;display:flex;align-items:center;gap:12px;font:400 12px/1 var(--mono);color:var(--muted);border-top:1px dashed var(--line);margin-top:14px}
+.foot .n{color:var(--ink);font-weight:600}
+.foot a{position:relative;z-index:1;color:var(--muted);text-underline-offset:3px;padding:8px 0}
+.foot a:hover{color:var(--ink)}
+.foot .err{margin-left:auto}
+.foot .err:hover{color:var(--red)}
+
+.card.more{grid-column:span 2;justify-content:center;background:transparent;border-style:dashed}
+.more-links{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:10px;font:600 13px/1 var(--mono)}
+.more-links a{padding:12px 0;text-underline-offset:3px}
+#f-gh:checked ~ .cards .card.more,#f-hn:checked ~ .cards .card.more{display:flex}
+.legal{border-top:1px solid var(--line);padding:18px 0 40px;font:400 12px/1.6 var(--mono);color:var(--muted)}
+
+/* ── responsivo ─────────────────────────────────────── */
+@media (max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:680px){
+  .wrap{padding:0 16px}
+  .hd .crumb{display:none}
+  .hd nav a{padding:10px 8px}
+  .day{grid-template-columns:1fr;gap:20px;padding-top:24px}
+  .matrix{grid-template-columns:repeat(9,minmax(0,1fr));justify-self:stretch}
+  .matrix a{grid-template-rows:repeat(5,14px)}
+  .kpis{gap:18px}
+  .bar .sort{display:none}
+  .cards{grid-template-columns:1fr}
+  .card.wide,.card.more{grid-column:auto}
+  .card.wide h2{font-size:19px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#itens">Pular para os itens</a>
+
+<header class="hd">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="alemau — início">
+      <svg viewBox="0 0 5 6" aria-hidden="true"><g fill="#eef0fb"><rect x="2" y="0" width=".9" height=".9"/><rect x="1" y="1" width=".9" height=".9"/><rect x="3" y="1" width=".9" height=".9"/><rect x="1" y="2" width=".9" height=".9"/><rect x="3" y="2" width=".9" height=".9"/><rect x="0" y="3" width=".9" height=".9"/><rect x="1" y="3" width=".9" height=".9"/><rect x="3" y="3" width=".9" height=".9"/><rect x="4" y="3" width=".9" height=".9"/><rect x="0" y="4" width=".9" height=".9"/><rect x="4" y="4" width=".9" height=".9"/><rect x="0" y="5" width=".9" height=".9"/><rect x="4" y="5" width=".9" height=".9"/></g><rect x="2" y="3" width=".9" height=".9" fill="#F0566B"/></svg>
+      <b>alemau</b>
+    </a>
+    <span class="crumb">radar / <b>2026-11-24</b></span>
+    <nav aria-label="Idioma">
+      <a href="#" hreflang="es" lang="es">es</a>
+      <a href="#" aria-current="page">pt</a>
+      <a href="#" hreflang="en" lang="en">en</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="itens">
+  <section class="day" aria-labelledby="t">
+    <div>
+      <h1 id="t">Radar dev <span>·</span> 24 nov</h1>
+      <p>Linguagens, um navegador novo do zero e ferramentas para ganhar desempenho sem reescrever tudo.</p>
+      <div class="kpis">
+        <span><b>10</b>itens</span>
+        <span><b>3</b>GitHub</span>
+        <span><b>7</b>Hacker News</span>
+        <span><b>6 min</b>leitura</span>
+      </div>
+    </div>
+    <div class="matrix" role="list" aria-label="Matriz do dia: força do sinal de cada item, de 1 a 5">
+      <a role="listitem" class="hot" href="#i1" aria-label="1 fast-anything, sinal 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" class="hot" href="#i2" aria-label="2 Ladybird, sinal 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i3" aria-label="3 xnulinux, sinal 4"><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i4" aria-label="4 AArch64, sinal 4"><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i5" aria-label="5 agy-fast, sinal 2"><i></i><i></i><i></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i6" aria-label="6 Stalwart, sinal 2"><i></i><i></i><i></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i7" aria-label="7 GPUI, sinal 2"><i></i><i></i><i></i><i class="on"></i><i class="on"></i></a>
+      <a role="listitem" href="#i8" aria-label="8 NariQ, sinal 1"><i></i><i></i><i></i><i></i><i class="on"></i></a>
+      <a role="listitem" href="#i9" aria-label="9 C++26, sinal 1"><i></i><i></i><i></i><i></i><i class="on"></i></a>
+      <span class="matrix-cap" aria-hidden="true">sinal por item · relativo à fonte</span>
+    </div>
+  </section>
+
+  <input class="flt" type="radio" name="f" id="f-all" checked>
+  <input class="flt" type="radio" name="f" id="f-gh">
+  <input class="flt" type="radio" name="f" id="f-hn">
+  <div class="bar" role="group" aria-label="Filtrar por fonte">
+    <span class="lbl">Fonte</span>
+    <label for="f-all">tudo<span>9</span></label>
+    <label for="f-gh">GitHub<span>3</span></label>
+    <label for="f-hn">Hacker News<span>6</span></label>
+    <span class="sort">ordem: sinal ↓</span>
+  </div>
+
+  <div class="cards">
+    <article class="card wide hot" id="i1" data-src="gh">
+      <div class="row"><span class="rank">01</span><span class="src gh">GitHub</span><span class="cat">perf</span><span class="meter" role="img" aria-label="Sinal 5 de 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <h2><a href="https://github.com/EL4CTEO/fast-anything">fast-anything: reescreva em Rust só as funções lentas da sua app</a></h2>
+      <p>Perfila apps em Python, Node ou Ruby, acha os 5% de funções lentas e usa um agente de código para portar só esses métodos para Rust.</p>
+      <p class="why">Desempenho sem reescrever o projeto inteiro.</p>
+      <div class="foot"><span>★ <span class="n">3218</span></span><span>Rust</span><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card hot" id="i2" data-src="hn">
+      <div class="row"><span class="rank">02</span><span class="src">HN</span><span class="cat">web</span><span class="meter" role="img" aria-label="Sinal 5 de 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <h2><a href="https://ladybird.org/posts/alpha/">Ladybird lança o primeiro alfa do navegador</a></h2>
+      <p>Binários para macOS e Linux, com motor próprio feito do zero.</p>
+      <p class="why">Um motor independente para testar compatibilidade.</p>
+      <div class="foot"><span>▲ <span class="n">1551</span></span><span>367 coment.</span><a href="https://news.ycombinator.com/item?id=50614249">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i3" data-src="gh">
+      <div class="row"><span class="rank">03</span><span class="src gh">GitHub</span><span class="cat">kernel</span><span class="meter" role="img" aria-label="Sinal 4 de 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+      <h2><a href="https://github.com/AFK-surf/xnulinux">xnulinux: o kernel XNU do macOS como módulo no Linux</a></h2>
+      <p>Compila o XNU como <code>xnu.ko</code> para um Linux arm64 sem modificações.</p>
+      <p class="why">Processos do macOS ao lado do Linux, sem hipervisor.</p>
+      <div class="foot"><span>★ <span class="n">2298</span></span><span>Obj-C++</span><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i4" data-src="hn">
+      <div class="row"><span class="rank">04</span><span class="src">HN</span><span class="cat">docs</span><span class="meter" role="img" aria-label="Sinal 4 de 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+      <h2><a href="https://arm.jonpalmisc.com/">Referência AArch64 sai do ar a pedido da Arm</a></h2>
+      <p>O site de instruções e registros Armv8-A/Armv9-A encerra em 4 de dezembro.</p>
+      <p class="why">Afeta quem escreve compiladores e assembly.</p>
+      <div class="foot"><span>▲ <span class="n">907</span></span><span>210 coment.</span><a href="https://news.ycombinator.com/item?id=50617499">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i5" data-src="gh">
+      <div class="row"><span class="rank">05</span><span class="src gh">GitHub</span><span class="cat">ia</span><span class="meter" role="img" aria-label="Sinal 2 de 5"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+      <h2><a href="https://github.com/INK-Q/agy-fast">agy-fast: plugin MCP que acelera o Google Antigravity</a></h2>
+      <p>Reduz turnos de LLM em 34%, cota de tokens em 31% e tráfego de envio em 40%.</p>
+      <p class="why">Menos latência e tokens em ambientes com agentes.</p>
+      <div class="foot"><span>★ <span class="n">807</span></span><span>TypeScript</span><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i6" data-src="hn">
+      <div class="row"><span class="rank">06</span><span class="src">HN</span><span class="cat">e-mail</span><span class="meter" role="img" aria-label="Sinal 2 de 5"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+      <h2><a href="https://stalw.art/blog/microsoft-exchange-replacement/">Stalwart 1.2.0 vira substituto do Exchange</a></h2>
+      <p>MAPI via HTTP, EWS, ActiveSync e Autodiscover para Outlook e Apple Mail.</p>
+      <p class="why">E-mail open-source sem trocar de cliente.</p>
+      <div class="foot"><span>▲ <span class="n">268</span></span><span>136 coment.</span><a href="https://news.ycombinator.com/item?id=50620349">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i7" data-src="hn">
+      <div class="row"><span class="rank">07</span><span class="src">HN</span><span class="cat">ui</span><span class="meter" role="img" aria-label="Sinal 2 de 5"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+      <h2><a href="https://github.com/zed-industries/gpui">GPUI ganha repositório próprio fora do Zed</a></h2>
+      <p>O framework de UI em Rust acelerado por GPU sai do monorepo do editor.</p>
+      <p class="why">Apps de desktop em Rust com a arquitetura do Zed.</p>
+      <div class="foot"><span>▲ <span class="n">167</span></span><span>58 coment.</span><a href="https://news.ycombinator.com/item?id=50619103">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i8" data-src="hn">
+      <div class="row"><span class="rank">08</span><span class="src">HN</span><span class="cat">ia</span><span class="meter" role="img" aria-label="Sinal 1 de 5"><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+      <h2><a href="https://huggingface.co/nari-labs/Qwen3.8-27B-NariQ-GGUF">NariQ: Qwen3.8-27B quantizado em 10 GB</a></h2>
+      <p>Quantizações de 3 bits ou menos, perto do BF16 em tarefas de agentes e matemática.</p>
+      <p class="why">Modelos robustos em GPUs com pouca memória.</p>
+      <div class="foot"><span>▲ <span class="n">136</span></span><span>29 coment.</span><a href="https://news.ycombinator.com/item?id=50611402">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <article class="card" id="i9" data-src="hn">
+      <div class="row"><span class="rank">09</span><span class="src">HN</span><span class="cat">linguagens</span><span class="meter" role="img" aria-label="Sinal 1 de 5"><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+      <h2><a href="https://herbsutter.com/2026/11/21/c26-is-done-again-trip-report-november-2026-iso-c-standards-meeting-buzios-brazil/">C++26 é finalizado de novo, em Búzios</a></h2>
+      <p>O comitê ISO C++ fechou o trabalho técnico após resolver os comentários sobre contratos.</p>
+      <p class="why">O status final da próxima versão da linguagem.</p>
+      <div class="foot"><span>▲ <span class="n">107</span></span><span>114 coment.</span><a href="https://news.ycombinator.com/item?id=50600838">discussão</a><a class="err" href="#">reportar erro</a></div>
+    </article>
+    <nav class="card more" aria-label="Outros dias">
+      <span class="row"><span class="cat">fim do radar</span></span>
+      <p>Isso é tudo de hoje. O próximo radar sai às 06:00 BRT.</p>
+      <div class="more-links"><a href="#">← radar de ontem</a><a href="#">arquivo</a><a href="#">RSS</a></div>
+    </nav>
+  </div>
+
+  <p class="legal">Gerado automaticamente com IA a partir de fontes públicas (APIs e RSS oficiais). Cada item leva ao original; o conteúdo pertence aos autores. O sinal compara cada item só com os da mesma fonte. Viu um erro? use “reportar erro”.</p>
+</main>
+</body>
+</html>

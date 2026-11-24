@@ -25,6 +25,8 @@ config.plugins.transformers.push({
     additionalHead: [
       h("meta", { "http-equiv": "Content-Security-Policy", content: csp }),
       h("meta", { name: "referrer", content: "strict-origin-when-cross-origin" }),
+      // atajos de teclado del resumen diario (archivo propio, servido desde 'self')
+      h("script", { src: "/static/js/atajos.js", defer: true }),
     ],
   }),
 })

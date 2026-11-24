@@ -220,11 +220,14 @@ def peligro(c: dict) -> str | None:
     return None
 
 
-def urls_publicadas(historial: Path | None) -> set[str]:
+def urls_publicadas(historial: Path | None, dia: str = "") -> set[str]:
     if not historial or not historial.exists():
         return set()
     urls = set()
     for md in historial.glob("*/diario/*.md"):
+        if md.stem == dia:  # regenerar el mismo día no debe excluir sus propios ítems
+            continue
+        urls.update(u.rstrip("/").lower() for u in re.findall(r'data-url="([^"]+)"', md.read_text(encoding="utf-8")))
         urls.update(u.rstrip("/").lower() for u in re.findall(r"\]\(<?(https?://[^)>\s]+)>?\)", md.read_text(encoding="utf-8")))
     return urls
 
@@ -296,10 +299,14 @@ Recibes candidatos de fuentes públicas, cada uno con un id y su CONTEXTO real.
    "3,2 mil"). No pongas en el texto las métricas (estrellas, puntos): se muestran aparte.
    Si el contexto es pobre, describe solo lo que el título dice y sé breve. No uses conocimiento externo.
 4. "intro": 1 frase por idioma con el panorama del día (sin números).
+5. Para cada ítem, estilo commit: "tipo" ∈ feat (lanzamiento/novedad), fix (corrección/parche),
+   perf (rendimiento), sec (noticia de seguridad), docs (guía/artículo/opinión), release (versión),
+   refactor (cambio de proyecto/organización); "area": 1 palabra en minúsculas en inglés (rust, web,
+   ai, kernel, java, mail, devops, db, mobile...).
 
 Responde SOLO JSON:
 {{"intro":{{"es":"","pt":"","en":""}},
-  "items":[{{"id":0,"es":{{"titulo":"","resumen":"","importa":""}},"pt":{{...}},"en":{{...}}}}]}}
+  "items":[{{"id":0,"tipo":"feat","area":"web","es":{{"titulo":"","resumen":"","importa":""}},"pt":{{...}},"en":{{...}}}}]}}
 """
 
 REVISOR = """Eres verificador de hechos. Para cada ítem tienes el CONTEXTO original (única fuente de verdad)
@@ -343,65 +350,159 @@ def numeros_ok(item: dict, c: dict) -> str | None:
     return None
 
 
-# ---------------------------------------------------------------- Markdown (capa 1: texto inofensivo)
-def limpiar(s: str) -> str:
-    """Texto del modelo -> Markdown inofensivo: sin HTML, sin enlaces ni formato propio, una línea."""
-    s = html.escape(re.sub(r"\s+", " ", s or "").strip(), quote=False)
-    s = re.sub(r"([\[\]`*_#|<>])", r"\\\1", s)
-    return re.sub(r"(https?):(//)", r"\1:\\/\\/", s)  # sin autoenlaces
+# ---------------------------------------------------------------- Página estilo changelog (capa 1: HTML seguro)
+# El resumen se escribe como un bloque HTML propio (sin líneas en blanco, para que Markdown no lo toque).
+# TODO texto que viene del modelo o de las fuentes pasa por esc(): sin HTML ni atributos inyectados.
+import hashlib
+import math
 
+ACTUAL = ' aria-current="page"'
+ENCENDIDA = '<i class="on"></i>'
+TIPOS = {"feat", "fix", "perf", "sec", "docs", "release", "refactor"}
 
 TXT = {
-    "es": {"titulo": "Resumen diario", "idioma": "Idioma", "importa": "Por qué importa", "fuente": "Fuente",
-           "discusion": "discusión", "reportar": "reportar un error", "estrellas": "estrellas", "puntos": "puntos",
-           "comentarios": "comentarios", "reacciones": "reacciones",
-           "pie": "Resumen generado automáticamente con IA ({modelo}, revisado por {revisor}) a partir de fuentes públicas (APIs y RSS oficiales). Cada ítem enlaza al original; el contenido pertenece a sus autores. Puede contener errores: usa \"reportar un error\" en el ítem."},
-    "pt": {"titulo": "Resumo diário", "idioma": "Idioma", "importa": "Por que importa", "fuente": "Fonte",
-           "discusion": "discussão", "reportar": "reportar um erro", "estrellas": "estrelas", "puntos": "pontos",
-           "comentarios": "comentários", "reacciones": "reações",
-           "pie": "Resumo gerado automaticamente com IA ({modelo}, revisado por {revisor}) a partir de fontes públicas (APIs e RSS oficiais). Cada item leva ao original; o conteúdo pertence aos autores. Pode conter erros: use \"reportar um erro\" no item."},
-    "en": {"titulo": "Daily digest", "idioma": "Language", "importa": "Why it matters", "fuente": "Source",
-           "discusion": "discussion", "reportar": "report an error", "estrellas": "stars", "puntos": "points",
-           "comentarios": "comments", "reacciones": "reactions",
-           "pie": "Digest generated automatically with AI ({modelo}, reviewed by {revisor}) from public sources (official APIs and RSS). Each item links to the original; the content belongs to its authors. It may contain mistakes: use \"report an error\" on the item."},
+    "es": {"titulo": "Resumen diario", "idioma": "Idioma", "commits": "commits", "lectura": "lectura", "min": "min",
+           "abrir": "abrir", "discusion": "discusión", "reportar": "reportar error", "atajos": "atajos",
+           "sig": "siguiente / anterior", "fuente": "abrir fuente", "dia_ant": "día anterior", "trocar": "cambiar idioma",
+           "senal": "señal relativa a la fuente", "estrellas": "estrellas", "puntos": "puntos", "comentarios": "coment.",
+           "reacciones": "reacciones", "dias": ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"],
+           "pie": "// generado automáticamente con IA ({modelo}, revisado por {revisor}) a partir de fuentes públicas (APIs y RSS oficiales). Cada ítem lleva al original; el contenido pertenece a sus autores. ¿Viste un error? usa \"reportar error\"."},
+    "pt": {"titulo": "Resumo diário", "idioma": "Idioma", "commits": "commits", "lectura": "leitura", "min": "min",
+           "abrir": "abrir", "discusion": "discussão", "reportar": "reportar erro", "atajos": "atalhos",
+           "sig": "próximo / anterior", "fuente": "abrir fonte", "dia_ant": "dia anterior", "trocar": "trocar idioma",
+           "senal": "sinal relativo à fonte", "estrellas": "estrelas", "puntos": "pontos", "comentarios": "coment.",
+           "reacciones": "reações", "dias": ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"],
+           "pie": "// gerado automaticamente com IA ({modelo}, revisado por {revisor}) a partir de fontes públicas (APIs e RSS oficiais). Cada item leva ao original; o conteúdo pertence aos autores. Viu um erro? use \"reportar erro\"."},
+    "en": {"titulo": "Daily digest", "idioma": "Language", "commits": "commits", "lectura": "read", "min": "min",
+           "abrir": "open", "discusion": "discussion", "reportar": "report error", "atajos": "shortcuts",
+           "sig": "next / previous", "fuente": "open source", "dia_ant": "previous day", "trocar": "switch language",
+           "senal": "signal relative to its source", "estrellas": "stars", "puntos": "points", "comentarios": "comments",
+           "reacciones": "reactions", "dias": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+           "pie": "// generated automatically with AI ({modelo}, reviewed by {revisor}) from public sources (official APIs and RSS). Each item links to the original; the content belongs to its authors. Spotted a mistake? use \"report error\"."},
 }
 
 
-def metricas(c: dict, t: dict) -> str:
+def esc(s) -> str:
+    return html.escape(re.sub(r"\s+", " ", str(s or "")).strip(), quote=True)
+
+
+def un_hash(url: str) -> str:
+    return hashlib.sha1(url.encode()).hexdigest()[:7]
+
+
+def puntaje(c: dict) -> float | None:
     m = c.get("metricas", {})
-    partes = [f"{m[k]} {t[k]}" for k in ("estrellas", "puntos", "reacciones", "comentarios") if m.get(k) is not None]
+    for k in ("estrellas", "puntos", "reacciones"):
+        if isinstance(m.get(k), (int, float)):
+            return float(m[k])
+    return None
+
+
+def senales(items: list[dict], candidatos: list[dict]) -> None:
+    """Señal 1-5 por ítem: posición (log) frente a los candidatos de la MISMA fuente. Blogs/RSS: 3."""
+    por_fuente: dict[str, list[float]] = {}
+    for c in candidatos:
+        p = puntaje(c)
+        if p is not None:
+            por_fuente.setdefault(c["fuente"], []).append(math.log1p(p))
+    for it in items:
+        c = candidatos[it["id"]]
+        p, lista = puntaje(c), por_fuente.get(c["fuente"], [])
+        if p is None or len(lista) < 2:
+            it["senal"] = 3
+            continue
+        lo, hi = min(lista), max(lista)
+        it["senal"] = 1 + round(4 * ((math.log1p(p) - lo) / (hi - lo))) if hi > lo else 3
+
+
+def dia_anterior(historial: Path | None, dia: str) -> str | None:
+    if not historial or not historial.exists():
+        return None
+    dias = sorted({md.stem for md in historial.glob("es/diario/*.md") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", md.stem) and md.stem < dia})
+    return dias[-1] if dias else None
+
+
+def numeros(c: dict, t: dict) -> str:
+    m = c.get("metricas", {})
+    partes = []
+    if isinstance(m.get("estrellas"), int):
+        partes.append(f'<span>★ <b>{m["estrellas"]}</b></span>')
+    if isinstance(m.get("puntos"), int):
+        partes.append(f'<span>▲ <b>{m["puntos"]}</b></span>')
+    if isinstance(m.get("reacciones"), int):
+        partes.append(f'<span>♥ <b>{m["reacciones"]}</b></span>')
+    if isinstance(m.get("comentarios"), int):
+        partes.append(f'<span>{m["comentarios"]} {esc(t["comentarios"])}</span>')
     if m.get("lenguaje"):
-        partes.append(m["lenguaje"])
+        partes.append(f'<span>{esc(m["lenguaje"])}</span>')
     if m.get("fecha"):
-        partes.append(m["fecha"])
-    return ", ".join(partes)
+        partes.append(f'<span>{esc(m["fecha"])}</span>')
+    return "".join(partes)
 
 
-def markdown(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str, revisor: str) -> str:
+def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str, revisor: str, anterior: str | None) -> str:
     t = TXT[lang]
-    linea = " · ".join(x.upper() if x == lang else f"[{x.upper()}](../../{x}/diario/{dia})" for x in LANGS)
-    intro = limpiar(datos.get("intro", {}).get(lang, ""))
+    intro = esc(datos.get("intro", {}).get(lang, ""))
+    items = datos["items"]
+    fuentes: dict[str, int] = {}
+    for it in items:
+        f = candidatos[it["id"]]["fuente"].split(" · ")[0]
+        fuentes[f] = fuentes.get(f, 0) + 1
+    fecha_d = dt.date.fromisoformat(dia)
+    lectura = max(2, round(len(items) * 0.6))
+    langs = "".join(
+        f'<a href="../../{x}/diario/{dia}" hreflang="{x}" lang="{x}"{ACTUAL if x == lang else ""}>{x}</a>' for x in LANGS)
+    ant = f'<a class="prev" href="./{anterior}">← {esc(anterior)}</a>' if anterior else ""
+    h = [
+        '<div class="alemau-log">',
+        f'<div class="cl-top"><div class="prompt" aria-hidden="true"><span class="p">~/diario</span> $ git log <span class="flag">--since={dia}</span> --top={len(items)}<span class="cur"></span></div>'
+        f'<nav class="langs" aria-label="{esc(t["idioma"])}">{langs}</nav></div>',
+        f'<section class="release"><span class="tag">v{dia.replace("-", ".")}</span>'
+        f'<p class="intro">{intro}</p>'
+        f'<div class="stat"><b>{len(items)} {t["commits"]}</b>'
+        + "".join(f' · <span class="add">+{n} {esc(f)}</span>' for f, n in sorted(fuentes.items(), key=lambda x: -x[1]))
+        + f' · {t["dias"][fecha_d.weekday()]} · {t["lectura"]} ~{lectura} {t["min"]}{" · " + ant if ant else ""}</div></section>',
+        f'<ol class="log" aria-label="{esc(t["titulo"])}">',
+    ]
+    for n, it in enumerate(items, 1):
+        c = candidatos[it["id"]]
+        d = it[lang]
+        hsh = un_hash(c["url"])
+        tipo = it.get("tipo") if it.get("tipo") in TIPOS else "feat"
+        area = it.get("area") if isinstance(it.get("area"), str) and re.fullmatch(r"[a-z0-9-]{2,14}", it["area"]) else "dev"
+        reporte = "https://github.com/{}/issues/new?{}".format(REPO, urllib.parse.urlencode({
+            "labels": "error-resumen", "title": f"Error en el resumen {dia} ({lang}) #{n} {hsh}",
+            "body": f"Ítem: {c['url']}\n\n¿Qué está mal?\n"}))
+        senal = int(it.get("senal", 3))
+        barras = "".join(ENCENDIDA if k < senal else "<i></i>" for k in range(5))
+        enlaces = f'<a class="open" href="{esc(c["url"])}">{t["abrir"]}</a>'
+        if c.get("discusion"):
+            enlaces += f'<a class="disc" href="{esc(c["discusion"])}">{t["discusion"]}</a>'
+        enlaces += f'<a class="err" href="{esc(reporte)}">{t["reportar"]}</a>'
+        h.append(
+            f'<li class="c{" top1" if n == 1 else ""}" id="c-{hsh}" data-url="{esc(c["url"])}">'
+            f'<a class="hash" href="#c-{hsh}">{hsh}</a><span class="node" aria-hidden="true"></span>'
+            f'<article class="body"><h2 class="cl-h"><span class="scope">{tipo}({area}):</span> '
+            f'<a href="{esc(c["url"])}">{esc(d["titulo"])}</a></h2>'
+            f'<p class="res">{esc(d["resumen"])}</p><p class="why">{esc(d["importa"])}</p>'
+            f'<div class="meta"><span class="src">{esc(c["fuente"].lower())}</span>{numeros(c, t)}'
+            f'<span class="sig" title="{esc(t["senal"])}" aria-label="{esc(t["senal"])}: {senal}/5">{barras}</span>{enlaces}</div>'
+            f'</article></li>')
+    h += [
+        "</ol>",
+        f'<p class="keys"><span>{esc(t["atajos"])}:</span> <kbd>j</kbd>/<kbd>k</kbd> {esc(t["sig"])} · <kbd>o</kbd> {esc(t["fuente"])} · '
+        f'<kbd>c</kbd> {esc(t["discusion"])} · <kbd>[</kbd> {esc(t["dia_ant"])} · <kbd>l</kbd> {esc(t["trocar"])}</p>',
+        f'<p class="cl-foot">{esc(t["pie"].format(modelo=modelo, revisor=revisor))}</p>',
+        f'<div class="statusline" aria-hidden="true"><span class="mode">LOG</span><span class="fill">diario/{dia}.md</span>'
+        f'<span class="r hide-sm">{lang} · utf-8</span><span class="r pos">1/{len(items)}</span></div>',
+        "</div>",
+    ]
     fm = [
-        "---", f'title: "{t["titulo"]} — {dia}"', f"date: {dia}", f"lang: {lang}", "publish: true",
+        "---", f'title: "{t["titulo"]} — {dia}"', f"date: {dia}", f"lang: {lang}", "publish: true", "cssclasses: [diario-log]",
         f'description: "{intro.replace(chr(34), chr(39))}"', "tags: [diario]", "translations:",
         *[f'  {o}: "[[{o}/diario/{dia}]]"' for o in LANGS if o != lang], "---", "",
-        f"**{t['idioma']}:** {linea}", "", intro, "",
     ]
-    for n, item in enumerate(datos["items"], 1):
-        c = candidatos[item["id"]]
-        d = {k: limpiar(v) for k, v in item[lang].items()}
-        fuente = f"[{c['fuente']}](<{c['url']}>)"
-        if c.get("discusion"):
-            fuente += f" · [{t['discusion']}](<{c['discusion']}>)"
-        reporte = "https://github.com/{}/issues/new?{}".format(REPO, urllib.parse.urlencode({
-            "labels": "error-resumen", "title": f"Error en el resumen {dia} ({lang}) #{n}",
-            "body": f"Ítem: {c['url']}\n\n¿Qué está mal?\n"}))
-        met = metricas(c, t)
-        fm += [f"## {n}. {d['titulo']}", "", d["resumen"], "",
-               f"**{t['importa']}:** {d['importa']}", "",
-               f"{t['fuente']}: {fuente}" + (f" · {met}" if met else "") + f" · [{t['reportar']}](<{reporte}>)", ""]
-    fm += ["---", "", f"*{t['pie'].format(modelo=modelo, revisor=revisor)}*", ""]
-    return "\n".join(fm)
+    return "\n".join(fm) + "".join(h) + "\n"
 
 
 def estructura_ok(it: dict, total: int) -> bool:
@@ -422,7 +523,7 @@ def main() -> None:
     a = ap.parse_args()
 
     candidatos = recolectar()
-    ya = urls_publicadas(a.historial)
+    ya = urls_publicadas(a.historial, a.dia)
     candidatos = [c for c in candidatos if c["url"].rstrip("/").lower() not in ya]
     bloqueados = [(c["titulo"], peligro(c)) for c in candidatos if peligro(c)]
     for titulo, motivo in bloqueados:
@@ -479,10 +580,11 @@ def main() -> None:
         print(f"NO SE PUBLICA: solo {len(finales)} ítems válidos (mínimo {MIN_ITEMS})", file=sys.stderr)
         sys.exit(3)
     datos["items"] = finales
+    senales(datos["items"], candidatos)
     for lang in LANGS:
         destino = a.salida / lang / "diario" / f"{a.dia}.md"
         destino.parent.mkdir(parents=True, exist_ok=True)
-        destino.write_text(markdown(lang, a.dia, datos, candidatos, modelo, revisor), encoding="utf-8")
+        destino.write_text(pagina(lang, a.dia, datos, candidatos, modelo, revisor, dia_anterior(a.historial, a.dia)), encoding="utf-8")
         print(f"escrito: {destino}", file=sys.stderr)
 
 
