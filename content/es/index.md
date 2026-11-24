@@ -1,8 +1,8 @@
 ---
 lang: es
 publish: true
-title: Español
-description: Tecnología, software, hardware e IA explicados con ejemplos claros.
+title: "Español"
+description: "Resumen diario para devs: GitHub, Hacker News, dev.to, Medium y blogs, en 2 minutos."
 translations:
   pt: "[[pt/index]]"
   en: "[[en/index]]"
@@ -10,6 +10,7 @@ translations:
 
 **Idioma:** ES · [PT](../pt/) · [EN](../en/)
 
-Bienvenido. Aquí escribo sobre **tecnología**: IA y desarrollo, software, hardware y cómo está el mercado hoy, siempre con ejemplos claros que ayuden a tomar decisiones en el día a día.
+**Un resumen diario para desarrolladores de todo el mundo**, cualquiera que sea tu especialidad: lo más útil de GitHub, Hacker News, dev.to, Medium y blogs de devs, con enlace al original.
 
-Los primeros artículos están en camino.
+- 📰 [[es/diario/index|Resúmenes diarios]]
+- ℹ️ [[es/sobre|Cómo se hace este blog]]

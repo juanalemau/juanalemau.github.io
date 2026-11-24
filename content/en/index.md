@@ -1,8 +1,8 @@
 ---
 lang: en
 publish: true
-title: English
-description: Technology, software, hardware and AI explained with clear examples.
+title: "English"
+description: "A daily digest for developers: GitHub, Hacker News, dev.to, Medium and blogs, in 2 minutes."
 translations:
   es: "[[es/index]]"
   pt: "[[pt/index]]"
@@ -10,6 +10,7 @@ translations:
 
 **Language:** [ES](../es/) · [PT](../pt/) · EN
 
-Welcome. I write about **technology**: AI and development, software, hardware and where the market stands today, always with clear examples that help you make everyday decisions.
+**A daily digest for developers around the world**, whatever your specialty: the most useful things from GitHub, Hacker News, dev.to, Medium and developer blogs, linking to the original.
 
-The first articles are on their way.
+- 📰 [[en/diario/index|Daily digests]]
+- ℹ️ [[en/sobre|How this blog is made]]

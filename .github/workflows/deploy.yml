@@ -7,6 +7,7 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call: # usado por resumen-diario.yml
 
 permissions:
   contents: read
@@ -23,6 +24,14 @@ jobs:
         with:
           fetch-depth: 0 # historial completo para las fechas de los artículos
           persist-credentials: false
+      - name: Incluir los resúmenes diarios (rama resumenes)
+        run: |
+          if git fetch --quiet --depth 1 origin resumenes; then
+            git archive FETCH_HEAD content | tar -x
+            echo "resúmenes: $(ls content/*/diario/*.md 2>/dev/null | wc -l) archivos"
+          else
+            echo "todavía no hay rama resumenes"
+          fi
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
