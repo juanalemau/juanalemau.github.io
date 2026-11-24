@@ -1,9 +1,22 @@
 // alemau — atajos de teclado del resumen diario (j/k siguiente/anterior, o abrir, c discusión,
-// [ día anterior, l cambiar idioma). Solo actúa si la página tiene .alemau-log; ignora campos de texto.
+// [ día anterior, l cambiar idioma, t tema claro/oscuro). Solo actúa si la página tiene .alemau-log; ignora campos de texto.
 (() => {
   if (window.__alemauAtajos) return
   window.__alemauAtajos = true
   const reducido = () => matchMedia("(prefers-reduced-motion: reduce)").matches
+  // Tema claro/oscuro: mismo mecanismo que el botón de Quartz (localStorage "theme" + evento themechange),
+  // así la elección vale para todo el sitio.
+  const cambiarTema = () => {
+    const raiz = document.documentElement
+    const actual = raiz.getAttribute("saved-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    const nuevo = actual === "dark" ? "light" : "dark"
+    raiz.setAttribute("saved-theme", nuevo)
+    localStorage.setItem("theme", nuevo)
+    document.dispatchEvent(new CustomEvent("themechange", { detail: { theme: nuevo } }))
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target instanceof Element && e.target.closest(".alemau-log .tema")) cambiarTema()
+  })
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return
     const t = e.target
@@ -32,6 +45,7 @@
       case "o": abrir("a.open"); break
       case "c": abrir("a.disc"); break
       case "[": log.querySelector(".prev")?.click(); break
+      case "t": cambiarTema(); break
       case "l": {
         const ls = [...log.querySelectorAll(".langs a")]
         const k = ls.findIndex((a) => a.hasAttribute("aria-current"))

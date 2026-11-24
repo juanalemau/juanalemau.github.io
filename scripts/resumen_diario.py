@@ -435,15 +435,40 @@ def dia_anterior(historial: Path | None, dia: str) -> str | None:
     return dias[-1] if dias else None
 
 
+MONOGRAMA = ('<svg viewBox="0 0 5 6" aria-hidden="true"><g fill="currentColor">'
+             + "".join(f'<rect x="{x}.05" y="{y}.05" width=".9" height=".9"/>' for x, y in
+                       [(2, 0), (1, 1), (3, 1), (1, 2), (3, 2), (0, 3), (1, 3), (3, 3), (4, 3), (0, 4), (4, 4), (0, 5), (4, 5)])
+             + '</g><rect x="2.05" y="3.05" width=".9" height=".9" class="cursor"/></svg>')
+
+ICONO_SOL = ('<svg class="sol" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+             'stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4'
+             'M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>')
+ICONO_LUNA = ('<svg class="luna" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+              'stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>')
+
+EXTRA = {
+    "es": {"tema": "Cambiar entre modo claro y oscuro", "tema_k": "tema claro / oscuro", "saltar": "Saltar al resumen", "inicio": "inicio", "sobre": "sobre este blog", "proximo": "siguiente / anterior",
+           "abrir_f": "abrir fuente", "senal_t": "Señal"},
+    "pt": {"tema": "Alternar entre modo claro e escuro", "tema_k": "tema claro / escuro", "saltar": "Pular para o resumo", "inicio": "início", "sobre": "sobre este blog", "proximo": "próximo / anterior",
+           "abrir_f": "abrir fonte", "senal_t": "Sinal"},
+    "en": {"tema": "Switch between light and dark mode", "tema_k": "light / dark theme", "saltar": "Skip to the digest", "inicio": "home", "sobre": "about this blog", "proximo": "next / previous",
+           "abrir_f": "open source", "senal_t": "Signal"},
+}
+
+
+def k(n: int) -> str:
+    return f"{n / 1000:.1f}k".replace(".0k", "k") if n >= 1000 else str(n)
+
+
 def numeros(c: dict, t: dict) -> str:
     m = c.get("metricas", {})
     partes = []
     if isinstance(m.get("estrellas"), int):
-        partes.append(f'<span>★ <b>{m["estrellas"]}</b></span>')
+        partes.append(f'<span>★ <span class="n">{k(m["estrellas"])}</span></span>')
     if isinstance(m.get("puntos"), int):
-        partes.append(f'<span>▲ <b>{m["puntos"]}</b></span>')
+        partes.append(f'<span>▲ <span class="n">{m["puntos"]}</span></span>')
     if isinstance(m.get("reacciones"), int):
-        partes.append(f'<span>♥ <b>{m["reacciones"]}</b></span>')
+        partes.append(f'<span>♥ <span class="n">{m["reacciones"]}</span></span>')
     if isinstance(m.get("comentarios"), int):
         partes.append(f'<span>{m["comentarios"]} {esc(t["comentarios"])}</span>')
     if m.get("lenguaje"):
@@ -454,7 +479,8 @@ def numeros(c: dict, t: dict) -> str:
 
 
 def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str, revisor: str, anterior: str | None) -> str:
-    t = TXT[lang]
+    """Página completa estilo `git log` (docs/proyecto/mockups/a-changelog.html), sin el marco de Quartz."""
+    t, x = TXT[lang], EXTRA[lang]
     intro = texto(intro_corta(datos.get("intro", {}).get(lang, "")))
     items = datos["items"]
     fuentes: dict[str, int] = {}
@@ -464,19 +490,26 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
     fecha_d = dt.date.fromisoformat(dia)
     lectura = max(2, round(len(items) * 0.6))
     langs = "".join(
-        f'<a href="../../{x}/diario/{dia}" hreflang="{x}" lang="{x}"{ACTUAL if x == lang else ""}>{x}</a>' for x in LANGS)
-    ant = f'<a class="prev" href="./{anterior}">← {esc(anterior)}</a>' if anterior else ""
+        f'<a href="../../{o}/diario/{dia}" hreflang="{o}" lang="{o}"{ACTUAL if o == lang else ""}>{o}</a>' for o in LANGS)
+    ant = f' · <a class="prev" href="./{anterior}">← {esc(anterior)}</a>' if anterior else ""
     h = [
         '<div class="alemau-log">',
-        f'<div class="cl-top"><div class="prompt" aria-hidden="true"><span class="p">~/diario</span> $ git log <span class="flag">--since={dia}</span> --top={len(items)}<span class="cur"></span></div>'
-        f'<nav class="langs" aria-label="{esc(t["idioma"])}">{langs}</nav></div>',
-        f'<section class="release"><span class="tag">v{dia.replace("-", ".")}</span>'
-        f'<p class="intro">{intro}</p>'
-        f'<div class="stat"><b>{len(items)} {t["commits"]}</b>'
-        + "".join(f' · <span class="add">+{n} {esc(f)}</span>' for f, n in sorted(fuentes.items(), key=lambda x: -x[1]))
-        + f' · {t["dias"][fecha_d.weekday()]} · {t["lectura"]} ~{lectura} {t["min"]}{" · " + ant if ant else ""}</div></section>',
-        f'<ol class="log" aria-label="{esc(t["titulo"])}">',
+        f'<a class="skip" href="#log">{esc(x["saltar"])}</a>',
+        '<header class="top"><div class="top-in">',
+        f'<a class="brand" href="../" aria-label="alemau — {esc(x["inicio"])}">{MONOGRAMA}<b>alemau</b></a>',
+        f'<div class="prompt" aria-hidden="true"><span class="p">~/diario</span> $ git log <span class="flag">--since={dia}</span> --top={len(items)}<span class="cur"></span></div>',
+        f'<nav class="langs" aria-label="{esc(t["idioma"])}">{langs}</nav>',
+        f'<button class="tema" type="button" aria-label="{esc(x["tema"])}" title="{esc(x["tema"])}">'
+        f'{ICONO_SOL}{ICONO_LUNA}</button>',
+        "</div></header>",
+        '<div class="cl-main">',
+        f'<section class="release"><span class="tag">v{dia.replace("-", ".")}</span><h1>{esc(t["titulo"])}</h1>'
+        f'<p>{intro}</p><div class="stat"><b>{len(items)} {t["commits"]}</b>'
+        + "".join(f' · <span class="add">+{n} {esc(f)}</span>' for f, n in sorted(fuentes.items(), key=lambda y: -y[1]))
+        + f' · {t["dias"][fecha_d.weekday()]} · {t["lectura"]} ~{lectura} {t["min"]}{ant}</div></section>',
+        f'<ol class="log" id="log" aria-label="{esc(t["titulo"])}">',
     ]
+    barras = []
     for n, it in enumerate(items, 1):
         c = candidatos[it["id"]]
         d = it[lang]
@@ -486,8 +519,8 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         reporte = "https://github.com/{}/issues/new?{}".format(REPO, urllib.parse.urlencode({
             "labels": "error-resumen", "title": f"Error en el resumen {dia} ({lang}) #{n} {hsh}",
             "body": f"Ítem: {c['url']}\n\n¿Qué está mal?\n"}))
-        senal = int(it.get("senal", 3))
-        barras = "".join(ENCENDIDA if k < senal else "<i></i>" for k in range(5))
+        senal = max(1, min(5, int(it.get("senal", 3))))
+        barras.append(f'<li><a href="#c-{hsh}">{hsh[:4]}</a><i style="width:{senal * 20}%"></i></li>')
         enlaces = f'<a class="open" href="{esc(c["url"])}">{t["abrir"]}</a>'
         if c.get("discusion"):
             enlaces += f'<a class="disc" href="{esc(c["discusion"])}">{t["discusion"]}</a>'
@@ -495,17 +528,25 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         h.append(
             f'<li class="c{" top1" if n == 1 else ""}" id="c-{hsh}" data-url="{esc(c["url"])}">'
             f'<a class="hash" href="#c-{hsh}">{hsh}</a><span class="node" aria-hidden="true"></span>'
-            f'<article class="body"><h2 class="cl-h"><span class="scope">{tipo}({area}):</span> '
+            f'<article class="body"><h2><span class="scope">{tipo}({area}):</span>'
             f'<a href="{esc(c["url"])}">{texto(d["titulo"])}</a></h2>'
-            f'<p class="res">{texto(d["resumen"])}</p><p class="why">{texto(d["importa"])}</p>'
-            f'<div class="meta"><span class="src">{esc(c["fuente"].lower())}</span>{numeros(c, t)}'
-            f'<span class="sig" title="{esc(t["senal"])}" aria-label="{esc(t["senal"])}: {senal}/5">{barras}</span>{enlaces}</div>'
-            f'</article></li>')
+            f'<p>{texto(d["resumen"])}</p><p class="why">{texto(d["importa"])}</p>'
+            f'<div class="meta"><span class="src">{esc(c["fuente"].lower())}</span>{numeros(c, t)}{enlaces}</div>'
+            "</article></li>")
     h += [
         "</ol>",
-        f'<p class="keys"><span>{esc(t["atajos"])}:</span> <kbd>j</kbd>/<kbd>k</kbd> {esc(t["sig"])} · <kbd>o</kbd> {esc(t["fuente"])} · '
-        f'<kbd>c</kbd> {esc(t["discusion"])} · <kbd>[</kbd> {esc(t["dia_ant"])} · <kbd>l</kbd> {esc(t["trocar"])}</p>',
-        f'<p class="cl-foot">{esc(t["pie"].format(modelo=modelo, revisor=revisor))}</p>',
+        f'<aside aria-label="{esc(t["atajos"])}"><section><h3>{esc(t["atajos"])}</h3><ul class="keys">'
+        f'<li><span>{esc(x["proximo"])}</span><span><kbd>j</kbd> <kbd>k</kbd></span></li>'
+        f'<li><span>{esc(x["abrir_f"])}</span><kbd>o</kbd></li>'
+        f'<li><span>{esc(t["discusion"])}</span><kbd>c</kbd></li>'
+        f'<li><span>{esc(t["dia_ant"])}</span><kbd>[</kbd></li>'
+        f'<li><span>{esc(t["trocar"])}</span><kbd>l</kbd></li>'
+        f'<li><span>{esc(x["tema_k"])}</span><kbd>t</kbd></li></ul>'
+        f'<h3>{esc(x["senal_t"])}</h3><ul class="bars" title="{esc(t["senal"])}">{"".join(barras)}</ul></section></aside>',
+        f'<footer class="cl-foot">{esc(t["pie"].format(modelo=modelo, revisor=revisor))}<br>'
+        f'<a href="../sobre">{esc(x["sobre"])}</a> · <a href="https://github.com/jackyzha0/quartz">Quartz (MIT)</a> · '
+        '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · <a href="https://github.com/juanalemau/juanalemau.github.io">GitHub</a></footer>',
+        "</div>",
         f'<div class="statusline" aria-hidden="true"><span class="mode">LOG</span><span class="fill">diario/{dia}.md</span>'
         f'<span class="r hide-sm">{lang} · utf-8</span><span class="r pos">1/{len(items)}</span></div>',
         "</div>",
@@ -518,10 +559,22 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
     return "\n".join(fm) + "".join(h) + "\n"
 
 
-def estructura_ok(it: dict, total: int) -> bool:
-    return (isinstance(it.get("id"), int) and 0 <= it["id"] < total
-            and all(isinstance(it.get(l), dict) and all(isinstance(it[l].get(k), str) and it[l][k].strip()
-                                                       for k in ("titulo", "resumen", "importa")) for l in LANGS))
+def problema_estructura(it: object, total: int) -> str | None:
+    """None si el ítem es válido; si no, el motivo exacto. Normaliza variaciones inofensivas."""
+    if not isinstance(it, dict):
+        return f"no es un objeto: {type(it).__name__}"
+    if isinstance(it.get("id"), str) and it["id"].strip().isdigit():
+        it["id"] = int(it["id"])
+    if not isinstance(it.get("id"), int) or not 0 <= it["id"] < total:
+        return f"id inválido: {it.get('id')!r}"
+    for l in LANGS:
+        bloque = it.get(l)
+        if not isinstance(bloque, dict):
+            return f"falta el bloque {l} (claves: {sorted(it)[:8]})"
+        for k in ("titulo", "resumen", "importa"):
+            if not isinstance(bloque.get(k), str) or not bloque[k].strip():
+                return f"falta {l}.{k} (claves de {l}: {sorted(bloque)[:6]})"
+    return None
 
 
 # ---------------------------------------------------------------- principal
@@ -563,8 +616,9 @@ def main() -> None:
 
     descartes, validos, ids = [], [], set()
     for it in datos["items"]:
-        if not estructura_ok(it, len(candidatos)) or it["id"] in ids:
-            descartes.append({"id": it.get("id"), "motivo": "estructura inválida o repetido"})
+        motivo = problema_estructura(it, len(candidatos)) or ("repetido" if it["id"] in ids else None)
+        if motivo:
+            descartes.append({"id": it.get("id") if isinstance(it, dict) else None, "motivo": f"estructura: {motivo}"})
             continue
         ids.add(it["id"])
         motivo = numeros_ok(it, candidatos[it["id"]])  # capa 2
@@ -584,7 +638,8 @@ def main() -> None:
     finales = [it for it in validos if it["id"] in apoyados][: a.items]
 
     informe = {"dia": a.dia, "redactor": modelo, "revisor": revisor, "candidatos": len(candidatos),
-               "propuestos": len(datos["items"]), "publicados": len(finales), "descartes": descartes}
+               "propuestos": len(datos["items"]), "publicados": len(finales), "descartes": descartes,
+               "muestra_respuesta": json.dumps(datos["items"][:1], ensure_ascii=False)[:1500]}
     print(json.dumps(informe, ensure_ascii=False, indent=1), file=sys.stderr)
     if a.informe:
         a.informe.write_text(json.dumps(informe, ensure_ascii=False, indent=1), encoding="utf-8")
