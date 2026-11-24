@@ -265,6 +265,29 @@ body:has(article.diario-log) {
     }
   }
 
+  // botón de tema (claro / oscuro)
+  .tema {
+    font: 600 15px/1 var(--mono);
+    color: var(--fg);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 9px 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    &:hover {
+      background: var(--bg);
+    }
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+    .luna {
+      display: none;
+    }
+  }
+
   // cuerpo: log + lateral
   .cl-main {
     max-width: 1080px;
@@ -628,7 +651,15 @@ body:has(article.diario-log) {
     }
   }
 }
-// escuro: mesma paleta del mockup
+// oscuro: misma paleta del mockup (el botón muestra el icono del modo actual)
+:root[saved-theme="dark"] .alemau-log .tema {
+  .sol {
+    display: none;
+  }
+  .luna {
+    display: block;
+  }
+}
 :root[saved-theme="dark"] .alemau-log {
   --bg: #10132f;
   --bg-2: #161a44;

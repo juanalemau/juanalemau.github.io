@@ -440,12 +440,18 @@ MONOGRAMA = ('<svg viewBox="0 0 5 6" aria-hidden="true"><g fill="currentColor">'
                        [(2, 0), (1, 1), (3, 1), (1, 2), (3, 2), (0, 3), (1, 3), (3, 3), (4, 3), (0, 4), (4, 4), (0, 5), (4, 5)])
              + '</g><rect x="2.05" y="3.05" width=".9" height=".9" class="cursor"/></svg>')
 
+ICONO_SOL = ('<svg class="sol" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+             'stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4'
+             'M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>')
+ICONO_LUNA = ('<svg class="luna" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" '
+              'stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>')
+
 EXTRA = {
-    "es": {"saltar": "Saltar al resumen", "inicio": "inicio", "sobre": "sobre este blog", "proximo": "siguiente / anterior",
+    "es": {"tema": "Cambiar entre modo claro y oscuro", "tema_k": "tema claro / oscuro", "saltar": "Saltar al resumen", "inicio": "inicio", "sobre": "sobre este blog", "proximo": "siguiente / anterior",
            "abrir_f": "abrir fuente", "senal_t": "Señal"},
-    "pt": {"saltar": "Pular para o resumo", "inicio": "início", "sobre": "sobre este blog", "proximo": "próximo / anterior",
+    "pt": {"tema": "Alternar entre modo claro e escuro", "tema_k": "tema claro / escuro", "saltar": "Pular para o resumo", "inicio": "início", "sobre": "sobre este blog", "proximo": "próximo / anterior",
            "abrir_f": "abrir fonte", "senal_t": "Sinal"},
-    "en": {"saltar": "Skip to the digest", "inicio": "home", "sobre": "about this blog", "proximo": "next / previous",
+    "en": {"tema": "Switch between light and dark mode", "tema_k": "light / dark theme", "saltar": "Skip to the digest", "inicio": "home", "sobre": "about this blog", "proximo": "next / previous",
            "abrir_f": "open source", "senal_t": "Signal"},
 }
 
@@ -493,6 +499,8 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         f'<a class="brand" href="../" aria-label="alemau — {esc(x["inicio"])}">{MONOGRAMA}<b>alemau</b></a>',
         f'<div class="prompt" aria-hidden="true"><span class="p">~/diario</span> $ git log <span class="flag">--since={dia}</span> --top={len(items)}<span class="cur"></span></div>',
         f'<nav class="langs" aria-label="{esc(t["idioma"])}">{langs}</nav>',
+        f'<button class="tema" type="button" aria-label="{esc(x["tema"])}" title="{esc(x["tema"])}">'
+        f'{ICONO_SOL}{ICONO_LUNA}</button>',
         "</div></header>",
         '<div class="cl-main">',
         f'<section class="release"><span class="tag">v{dia.replace("-", ".")}</span><h1>{esc(t["titulo"])}</h1>'
@@ -532,7 +540,8 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         f'<li><span>{esc(x["abrir_f"])}</span><kbd>o</kbd></li>'
         f'<li><span>{esc(t["discusion"])}</span><kbd>c</kbd></li>'
         f'<li><span>{esc(t["dia_ant"])}</span><kbd>[</kbd></li>'
-        f'<li><span>{esc(t["trocar"])}</span><kbd>l</kbd></li></ul>'
+        f'<li><span>{esc(t["trocar"])}</span><kbd>l</kbd></li>'
+        f'<li><span>{esc(x["tema_k"])}</span><kbd>t</kbd></li></ul>'
         f'<h3>{esc(x["senal_t"])}</h3><ul class="bars" title="{esc(t["senal"])}">{"".join(barras)}</ul></section></aside>',
         f'<footer class="cl-foot">{esc(t["pie"].format(modelo=modelo, revisor=revisor))}<br>'
         f'<a href="../sobre">{esc(x["sobre"])}</a> · <a href="https://github.com/jackyzha0/quartz">Quartz (MIT)</a> · '
