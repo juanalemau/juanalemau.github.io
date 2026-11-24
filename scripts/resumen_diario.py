@@ -456,6 +456,34 @@ EXTRA = {
 }
 
 
+def sin_popover(s: str) -> str:
+    """Navegación propia sin la vista previa (popover) de Quartz: añade data-no-popover a cada <a>."""
+    return re.sub(r"<a (?![^>]*data-no-popover)", '<a data-no-popover="true" ', s)
+
+
+SITIO = "https://juanalemau.github.io"
+
+
+def escribir_rss(base: Path, lang: str, maximo: int = 30) -> None:
+    """RSS por idioma (/{lang}/diario/feed.xml) con los resúmenes guardados en base/{lang}/diario/*.md."""
+    t = TXT[lang]
+    dias = sorted((md for md in (base / lang / "diario").glob("*.md") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", md.stem)),
+                  key=lambda m: m.stem, reverse=True)[:maximo]
+    items = []
+    for md in dias:
+        texto_md = md.read_text(encoding="utf-8")
+        m = re.search(r'^description: "(.*)"$', texto_md, re.M)
+        desc = html.unescape(m.group(1)) if m else ""
+        fecha_d = dt.datetime.fromisoformat(md.stem).replace(hour=9, tzinfo=dt.timezone.utc)
+        url = f"{SITIO}/{lang}/diario/{md.stem}"
+        items.append(f"<item><title>{esc(t['titulo'])} — {md.stem}</title><link>{url}</link><guid>{url}</guid>"
+                     f"<pubDate>{fecha_d.strftime('%a, %d %b %Y %H:%M:%S +0000')}</pubDate><description>{esc(desc)}</description></item>")
+    rss = ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel>'
+           f"<title>alemau — {esc(t['titulo'])}</title><link>{SITIO}/{lang}/diario/</link>"
+           f"<description>{esc(t['titulo'])} · alemau</description><language>{lang}</language>{''.join(items)}</channel></rss>\n")
+    (base / lang / "diario" / "feed.xml").write_text(rss, encoding="utf-8")
+
+
 def k(n: int) -> str:
     return f"{n / 1000:.1f}k".replace(".0k", "k") if n >= 1000 else str(n)
 
@@ -556,7 +584,7 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         f'description: "{esc(intro_corta(datos.get("intro", {}).get(lang, ""))).replace(chr(34), chr(39))}"', "tags: [diario]", "translations:",
         *[f'  {o}: "[[{o}/diario/{dia}]]"' for o in LANGS if o != lang], "---", "",
     ]
-    return "\n".join(fm) + "".join(h) + "\n"
+    return "\n".join(fm) + sin_popover("".join(h)) + "\n"
 
 
 def problema_estructura(it: object, total: int) -> str | None:
@@ -586,8 +614,21 @@ def main() -> None:
     ap.add_argument("--items", type=int, default=10)
     ap.add_argument("--dia", default=AHORA.date().isoformat())
     ap.add_argument("--informe", type=Path, help="JSON con lo descartado y por qué")
+    ap.add_argument("--rss", type=Path, help="solo regenerar los RSS por idioma sobre este directorio content/")
     a = ap.parse_args()
 
+    if a.rss:  # RSS + índice del diario por idioma, sobre todos los resúmenes guardados
+        from paginas import indice_diario  # import local: paginas importa este módulo
+        for lang in LANGS:
+            escribir_rss(a.rss, lang)
+            dias = []
+            for md in sorted((a.rss / lang / "diario").glob("*.md"), key=lambda m: m.stem, reverse=True):
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", md.stem):
+                    m = re.search(r'^description: "(.*)"$', md.read_text(encoding="utf-8"), re.M)
+                    dias.append((md.stem, html.unescape(m.group(1)) if m else ""))
+            (a.rss / lang / "diario" / "index.md").write_text(indice_diario(lang, dias), encoding="utf-8")
+        print(f"rss e índices escritos en {a.rss}", file=sys.stderr)
+        return
     candidatos = recolectar()
     ya = urls_publicadas(a.historial, a.dia)
     candidatos = [c for c in candidatos if c["url"].rstrip("/").lower() not in ya]

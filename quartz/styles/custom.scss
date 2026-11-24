@@ -96,15 +96,17 @@ $idiomas: es, pt, en;
 // ─────────────────────────────────────────────────────────────────────────────
 // alemau — dirección A: el resumen diario como un `git log`.
 // Port fiel de docs/proyecto/mockups/a-changelog.html. Solo en páginas con article.diario-log:
-// ahí se oculta el marco de Quartz (barras laterales, migas, pie) y la página ocupa la pantalla.
+// En toda página con .alemau-log (todo el sitio) se oculta el marco de Quartz (barras laterales,
+// migas, pie, listado de carpeta) y la página ocupa la pantalla.
 // El crédito a Quartz va en el pie propio (.cl-foot).
 // ─────────────────────────────────────────────────────────────────────────────
-body:has(article.diario-log) {
+body:has(.alemau-log) {
   background: #fbfaf7;
   .left.sidebar,
   .right.sidebar,
   .page-header,
-  .page-footer {
+  .page-footer,
+  .page-listing {
     display: none !important;
   }
   #quartz-body {
@@ -124,7 +126,7 @@ body:has(article.diario-log) {
     }
   }
 }
-:root[saved-theme="dark"] body:has(article.diario-log) {
+:root[saved-theme="dark"] body:has(.alemau-log) {
   background: #10132f;
 }
 
@@ -472,6 +474,54 @@ body:has(article.diario-log) {
       &.err:hover {
         color: var(--red);
       }
+    }
+  }
+
+  // páginas de una sola columna (portada, idioma, sobre, índice del diario)
+  .cl-main.solo {
+    grid-template-columns: minmax(0, 1fr);
+    & > .log,
+    & > .doc,
+    & > .cl-foot {
+      grid-column: 1;
+      grid-row: auto;
+    }
+  }
+  .doc {
+    max-width: 72ch;
+    color: var(--fg-2);
+    p {
+      margin: 0 0 1em;
+    }
+    strong {
+      color: var(--fg);
+    }
+    h2 {
+      margin: 1.6em 0 0.6em;
+      font: 600 13px/1.2 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      &::before {
+        content: "## ";
+        color: var(--muted);
+      }
+    }
+    ol,
+    ul {
+      margin: 0 0 1em;
+      padding-left: 1.4em;
+      list-style: decimal;
+    }
+    li {
+      margin: 0.45em 0;
+      padding: 0;
+    }
+    a {
+      color: var(--fg);
+      text-decoration: underline;
+      text-decoration-color: var(--red);
+      text-underline-offset: 3px;
     }
   }
 

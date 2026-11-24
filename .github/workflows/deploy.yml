@@ -29,6 +29,7 @@ jobs:
           if git fetch --quiet --depth 1 origin resumenes; then
             git archive FETCH_HEAD content | tar -x
             echo "resúmenes: $(ls content/*/diario/*.md 2>/dev/null | wc -l) archivos"
+            python3 scripts/resumen_diario.py --rss content  # RSS e índice del diario por idioma
           else
             echo "todavía no hay rama resumenes"
           fi
