@@ -294,6 +294,13 @@ body:has(article.diario-log) {
     color: var(--secondary);
     white-space: nowrap;
   }
+  code {
+    font: 400 0.88em var(--mono);
+    padding: 0.05em 0.35em;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--lightgray) 55%, transparent);
+    color: var(--dark);
+  }
   .res {
     margin: 0.5rem 0 0;
     color: var(--darkgray);

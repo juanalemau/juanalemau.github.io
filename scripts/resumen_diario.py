@@ -298,7 +298,8 @@ Recibes candidatos de fuentes públicas, cada uno con un id y su CONTEXTO real.
    EXACTAMENTE como aparece en el contexto (sin redondear, convertir ni reescribir: "3206", no
    "3,2 mil"). No pongas en el texto las métricas (estrellas, puntos): se muestran aparte.
    Si el contexto es pobre, describe solo lo que el título dice y sé breve. No uses conocimiento externo.
-4. "intro": 1 frase por idioma con el panorama del día (sin números).
+4. "intro": 1 frase CORTA por idioma (máximo 15 palabras) con el panorama del día, sin números.
+   Escribe nombres de archivos, comandos o código entre comillas invertidas: `xnu.ko`.
 5. Para cada ítem, estilo commit: "tipo" ∈ feat (lanzamiento/novedad), fix (corrección/parche),
    perf (rendimiento), sec (noticia de seguridad), docs (guía/artículo/opinión), release (versión),
    refactor (cambio de proyecto/organización); "area": 1 palabra en minúsculas en inglés (rust, web,
@@ -386,6 +387,18 @@ def esc(s) -> str:
     return html.escape(re.sub(r"\s+", " ", str(s or "")).strip(), quote=True)
 
 
+def texto(s) -> str:
+    """Texto del modelo ya escapado; `código` -> <code> (seguro: el contenido ya no tiene HTML)."""
+    return re.sub(r"`([^`]{1,60})`", r"<code>\1</code>", esc(s))
+
+
+def intro_corta(s: str, maximo: int = 18) -> str:
+    palabras = re.sub(r"\s+", " ", str(s or "")).strip().split(" ")
+    if len(palabras) <= maximo:
+        return " ".join(palabras)
+    return " ".join(palabras[:maximo]).rstrip(",;:—-") + "…"
+
+
 def un_hash(url: str) -> str:
     return hashlib.sha1(url.encode()).hexdigest()[:7]
 
@@ -442,7 +455,7 @@ def numeros(c: dict, t: dict) -> str:
 
 def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str, revisor: str, anterior: str | None) -> str:
     t = TXT[lang]
-    intro = esc(datos.get("intro", {}).get(lang, ""))
+    intro = texto(intro_corta(datos.get("intro", {}).get(lang, "")))
     items = datos["items"]
     fuentes: dict[str, int] = {}
     for it in items:
@@ -483,8 +496,8 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
             f'<li class="c{" top1" if n == 1 else ""}" id="c-{hsh}" data-url="{esc(c["url"])}">'
             f'<a class="hash" href="#c-{hsh}">{hsh}</a><span class="node" aria-hidden="true"></span>'
             f'<article class="body"><h2 class="cl-h"><span class="scope">{tipo}({area}):</span> '
-            f'<a href="{esc(c["url"])}">{esc(d["titulo"])}</a></h2>'
-            f'<p class="res">{esc(d["resumen"])}</p><p class="why">{esc(d["importa"])}</p>'
+            f'<a href="{esc(c["url"])}">{texto(d["titulo"])}</a></h2>'
+            f'<p class="res">{texto(d["resumen"])}</p><p class="why">{texto(d["importa"])}</p>'
             f'<div class="meta"><span class="src">{esc(c["fuente"].lower())}</span>{numeros(c, t)}'
             f'<span class="sig" title="{esc(t["senal"])}" aria-label="{esc(t["senal"])}: {senal}/5">{barras}</span>{enlaces}</div>'
             f'</article></li>')
@@ -499,7 +512,7 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
     ]
     fm = [
         "---", f'title: "{t["titulo"]} — {dia}"', f"date: {dia}", f"lang: {lang}", "publish: true", "cssclasses: [diario-log]",
-        f'description: "{intro.replace(chr(34), chr(39))}"', "tags: [diario]", "translations:",
+        f'description: "{esc(intro_corta(datos.get("intro", {}).get(lang, ""))).replace(chr(34), chr(39))}"', "tags: [diario]", "translations:",
         *[f'  {o}: "[[{o}/diario/{dia}]]"' for o in LANGS if o != lang], "---", "",
     ]
     return "\n".join(fm) + "".join(h) + "\n"
