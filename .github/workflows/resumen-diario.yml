@@ -1,0 +1,39 @@
+# Resumen diario para devs: recolecta fuentes públicas y Gemini resume en es/pt/en.
+# Etapa de prueba: en cada PR que toca el pipeline genera el resumen de hoy como VISTA PREVIA
+# (resumen del job + artefacto), sin publicar nada.
+name: Resumen diario
+
+on:
+  pull_request:
+    paths:
+      - "scripts/resumen_diario.py"
+      - "scripts/fuentes.json"
+      - ".github/workflows/resumen-diario.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vista-previa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generar resumen (Gemini)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/resumen_diario.py --salida vista-previa
+      - name: Mostrar en el resumen del job
+        run: |
+          for l in es pt en; do
+            echo "# $l" >> "$GITHUB_STEP_SUMMARY"
+            cat vista-previa/$l/diario/*.md >> "$GITHUB_STEP_SUMMARY"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: resumen-vista-previa
+          path: vista-previa
+          retention-days: 7

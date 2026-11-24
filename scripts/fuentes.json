@@ -1,0 +1,131 @@
+{
+  "_nota": "Solo RSS/Atom oficiales. 'horas' = antigüedad máxima; 'maximo' = ítems por fuente. Probar cambios con: python3 scripts/resumen_diario.py --solo-recolectar",
+  "rss": [
+    {
+      "nombre": "Medium · programming",
+      "url": "https://medium.com/feed/tag/programming",
+      "horas": 48,
+      "maximo": 3
+    },
+    {
+      "nombre": "Medium · software-engineering",
+      "url": "https://medium.com/feed/tag/software-engineering",
+      "horas": 48,
+      "maximo": 3
+    },
+    {
+      "nombre": "Medium · artificial-intelligence",
+      "url": "https://medium.com/feed/tag/artificial-intelligence",
+      "horas": 48,
+      "maximo": 3
+    },
+    {
+      "nombre": "Medium · web-development",
+      "url": "https://medium.com/feed/tag/web-development",
+      "horas": 48,
+      "maximo": 3
+    },
+    {
+      "nombre": "Medium · javascript",
+      "url": "https://medium.com/feed/tag/javascript",
+      "horas": 48,
+      "maximo": 2
+    },
+    {
+      "nombre": "Medium · python",
+      "url": "https://medium.com/feed/tag/python",
+      "horas": 48,
+      "maximo": 2
+    },
+    {
+      "nombre": "Lobsters",
+      "url": "https://lobste.rs/rss",
+      "horas": 36,
+      "maximo": 6
+    },
+    {
+      "nombre": "InfoQ",
+      "url": "https://feed.infoq.com/",
+      "horas": 48,
+      "maximo": 4
+    },
+    {
+      "nombre": "GitHub Blog",
+      "url": "https://github.blog/feed/",
+      "horas": 72,
+      "maximo": 2
+    },
+    {
+      "nombre": "Stack Overflow Blog",
+      "url": "https://stackoverflow.blog/feed/",
+      "horas": 72,
+      "maximo": 2
+    },
+    {
+      "nombre": "The Pragmatic Engineer",
+      "url": "https://newsletter.pragmaticengineer.com/feed",
+      "horas": 96,
+      "maximo": 2
+    },
+    {
+      "nombre": "Simon Willison",
+      "url": "https://simonwillison.net/atom/everything/",
+      "horas": 48,
+      "maximo": 3
+    },
+    {
+      "nombre": "Martin Fowler",
+      "url": "https://martinfowler.com/feed.atom",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Julia Evans",
+      "url": "https://jvns.ca/atom.xml",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Dan Abramov (overreacted)",
+      "url": "https://overreacted.io/rss.xml",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Kent C. Dodds",
+      "url": "https://kentcdodds.com/blog/rss.xml",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Josh W. Comeau",
+      "url": "https://www.joshwcomeau.com/rss.xml",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Cloudflare Blog",
+      "url": "https://blog.cloudflare.com/rss/",
+      "horas": 72,
+      "maximo": 2
+    },
+    {
+      "nombre": "Netflix Tech Blog",
+      "url": "https://netflixtechblog.com/feed",
+      "horas": 168,
+      "maximo": 2
+    },
+    {
+      "nombre": "Meta Engineering",
+      "url": "https://engineering.fb.com/feed/",
+      "horas": 96,
+      "maximo": 2
+    },
+    {
+      "nombre": "AWS News Blog",
+      "url": "https://aws.amazon.com/blogs/aws/feed/",
+      "horas": 48,
+      "maximo": 2
+    }
+  ]
+}
