@@ -17,7 +17,7 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|style)/[0-9]+-[a-z0-9-]+$ && ! "$BRANCH" =~ ^dependabot/ ]]; then
+          if [[ ! "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test|ci|perf|build|style)/[0-9]+-[a-z0-9-]+$ && ! "$BRANCH" =~ ^dependabot/ && ! "$BRANCH" =~ ^release-please-- ]]; then
             echo "::error::La rama '$BRANCH' no sigue el formato <tipo>/<n°-issue>-<descripcion> (ej.: feat/3-articulo-agentes-ia)"
             exit 1
           fi
