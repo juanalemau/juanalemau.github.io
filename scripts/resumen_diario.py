@@ -190,18 +190,20 @@ def urls_publicadas(historial: Path | None) -> set[str]:
 API = "https://generativelanguage.googleapis.com/v1beta"
 
 
-def elegir_modelo(clave: str) -> str:
+def modelos_disponibles(clave: str) -> list[str]:
+    """Modelos gemini-*-flash (y -flash-lite como respaldo) de esta clave, del mejor al peor."""
     if os.environ.get("GEMINI_MODEL"):
-        return os.environ["GEMINI_MODEL"]
+        return [os.environ["GEMINI_MODEL"]]
     modelos = json_de(f"{API}/models?pageSize=200", headers={"x-goog-api-key": clave}).get("models", [])
     candidatos = []
     for m in modelos:
         nombre = m["name"].split("/")[-1]
-        if ("generateContent" in m.get("supportedGenerationMethods", []) and re.fullmatch(r"gemini-[\d.]+-flash", nombre)):
-            candidatos.append((tuple(int(x) for x in re.findall(r"\d+", nombre)), nombre))
+        if "generateContent" in m.get("supportedGenerationMethods", []) and re.fullmatch(r"gemini-[\d.]+-flash(-lite)?", nombre):
+            version = tuple(int(x) for x in re.findall(r"\d+", nombre))
+            candidatos.append((0 if nombre.endswith("lite") else 1, version, nombre))
     if not candidatos:
         raise SystemExit("No hay modelo gemini-*-flash disponible para esta clave")
-    return max(candidatos)[1]
+    return [n for *_, n in sorted(candidatos, reverse=True)]
 
 
 INSTRUCCIONES = """Eres el editor de "alemau", un resumen diario para desarrolladores de todo el mundo
@@ -230,25 +232,30 @@ Responde SOLO JSON:
 
 
 def resumir(candidatos: list[dict], clave: str, n: int) -> tuple[dict, str]:
-    modelo = elegir_modelo(clave)
     entrada = [{"id": i, "fuente": c["fuente"], "titulo": c["titulo"], "metricas": c["metricas"], "contexto": c["contexto"]}
                for i, c in enumerate(candidatos)]
     cuerpo = json.dumps({
         "contents": [{"role": "user", "parts": [{"text": INSTRUCCIONES.format(n=n) + "\n\nCANDIDATOS:\n" + json.dumps(entrada, ensure_ascii=False)}]}],
         "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"},
     }).encode()
-    for intento in range(4):
-        try:
-            r = json.loads(pedir(f"{API}/models/{modelo}:generateContent", data=cuerpo, timeout=180,
-                                 headers={"Content-Type": "application/json", "x-goog-api-key": clave}))
-            texto = r["candidates"][0]["content"]["parts"][0]["text"]
-            return json.loads(texto), modelo
-        except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 503) and intento < 3:
-                time.sleep(30 * (intento + 1))
-                continue
-            raise SystemExit(f"Gemini respondió HTTP {e.code}: {e.read()[:300]!r}") from None
-    raise SystemExit("Gemini no respondió")
+    modelos = modelos_disponibles(clave)
+    print(f"modelos en orden: {modelos[:6]}", file=sys.stderr)
+    for modelo in modelos[:6]:
+        for intento in range(2):
+            try:
+                r = json.loads(pedir(f"{API}/models/{modelo}:generateContent", data=cuerpo, timeout=240,
+                                     headers={"Content-Type": "application/json", "x-goog-api-key": clave}))
+                return json.loads(r["candidates"][0]["content"]["parts"][0]["text"]), modelo
+            except urllib.error.HTTPError as e:
+                avisar(f"{modelo}: HTTP {e.code} {e.read()[:160]!r}")
+                if e.code in (429, 500, 503) and intento == 0:
+                    time.sleep(20)
+                    continue
+                break  # siguiente modelo
+            except (KeyError, IndexError, json.JSONDecodeError, TimeoutError) as e:
+                avisar(f"{modelo}: respuesta inválida ({e})")
+                break
+    raise SystemExit("Ningún modelo Gemini respondió")
 
 
 # ---------------------------------------------------------------- Markdown
