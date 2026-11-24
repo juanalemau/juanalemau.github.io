@@ -518,13 +518,13 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
     fecha_d = dt.date.fromisoformat(dia)
     lectura = max(2, round(len(items) * 0.6))
     langs = "".join(
-        f'<a href="../../{o}/diario/{dia}" hreflang="{o}" lang="{o}"{ACTUAL if o == lang else ""}>{o}</a>' for o in LANGS)
-    ant = f' · <a class="prev" href="./{anterior}">← {esc(anterior)}</a>' if anterior else ""
+        f'<a href="/{o}/diario/{dia}" hreflang="{o}" lang="{o}"{ACTUAL if o == lang else ""}>{o}</a>' for o in LANGS)
+    ant = f' · <a class="prev" href="/{lang}/diario/{anterior}">← {esc(anterior)}</a>' if anterior else ""
     h = [
         '<div class="alemau-log">',
         f'<a class="skip" href="#log">{esc(x["saltar"])}</a>',
         '<header class="top"><div class="top-in">',
-        f'<a class="brand" href="../" aria-label="alemau — {esc(x["inicio"])}">{MONOGRAMA}<b>alemau</b></a>',
+        f'<a class="brand" href="/{lang}/" aria-label="alemau — {esc(x["inicio"])}">{MONOGRAMA}<b>alemau</b></a>',
         f'<div class="prompt" aria-hidden="true"><span class="p">~/diario</span> $ git log <span class="flag">--since={dia}</span> --top={len(items)}<span class="cur"></span></div>',
         f'<nav class="langs" aria-label="{esc(t["idioma"])}">{langs}</nav>',
         f'<button class="tema" type="button" aria-label="{esc(x["tema"])}" title="{esc(x["tema"])}">'
@@ -572,7 +572,7 @@ def pagina(lang: str, dia: str, datos: dict, candidatos: list[dict], modelo: str
         f'<li><span>{esc(x["tema_k"])}</span><kbd>t</kbd></li></ul>'
         f'<h3>{esc(x["senal_t"])}</h3><ul class="bars" title="{esc(t["senal"])}">{"".join(barras)}</ul></section></aside>',
         f'<footer class="cl-foot">{esc(t["pie"].format(modelo=modelo, revisor=revisor))}<br>'
-        f'<a href="../sobre">{esc(x["sobre"])}</a> · <a href="https://github.com/jackyzha0/quartz">Quartz (MIT)</a> · '
+        f'<a href="/{lang}/sobre">{esc(x["sobre"])}</a> · <a href="https://github.com/jackyzha0/quartz">Quartz (MIT)</a> · '
         '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · <a href="https://github.com/juanalemau/juanalemau.github.io">GitHub</a></footer>',
         "</div>",
         f'<div class="statusline" aria-hidden="true"><span class="mode">LOG</span><span class="fill">diario/{dia}.md</span>'
