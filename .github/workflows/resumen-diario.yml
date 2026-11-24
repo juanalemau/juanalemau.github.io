@@ -57,7 +57,10 @@ jobs:
         if: always()
         run: |
           { echo '## Informe'; echo '```json'; cat informe.json 2>/dev/null || echo '{}'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          for f in salida/*/diario/*.md; do [ -f "$f" ] && { echo "## $f"; cat "$f"; } >> "$GITHUB_STEP_SUMMARY"; done
+          # Sin resumen nuevo (p. ej. ya publicado hoy) el glob no encuentra nada: no es un error.
+          for f in salida/*/diario/*.md; do
+            if [ -f "$f" ]; then { echo "## $f"; cat "$f"; } >> "$GITHUB_STEP_SUMMARY"; fi
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
