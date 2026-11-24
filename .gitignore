@@ -23,3 +23,6 @@ graphify-out/
 .claude/hooks/
 .claude/skills/
 .claude/rules/
+
+# Python
+__pycache__/
