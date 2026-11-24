@@ -121,8 +121,8 @@ def entrada(clave: str, scope: str, titulo: str, href: str, texto: str, meta: st
 def portada() -> str:
     t = T["es"]
     items = "".join(
-        entrada(f"{o}/", f"cd {o}/", NOMBRE[o], f"./{o}/", T[o]["lema"],
-                f'<span class="src">{o}</span><a href="./{o}/diario/">{esc(T[o]["hoy"])}</a><a href="./{o}/sobre">{esc(T[o]["sobre"].lower())}</a>',
+        entrada(f"{o}/", f"cd {o}/", NOMBRE[o], f"/{o}/", T[o]["lema"],
+                f'<span class="src">{o}</span><a href="/{o}/diario/">{esc(T[o]["hoy"])}</a><a href="/{o}/sobre">{esc(T[o]["sobre"].lower())}</a>',
                 primero=(o == "es")) for o in LANGS)
     cuerpo = ('<section class="release"><span class="tag">README</span><h1>alemau</h1>'
               f'<p>{esc(t["lema"])} · {esc(T["pt"]["lema"])} · {esc(T["en"]["lema"])}</p>'
@@ -130,21 +130,21 @@ def portada() -> str:
               ' · <span class="add">dev.to</span> · <span class="add">Medium</span> · <span class="add">blogs</span></div></section>'
               f'<ol class="log">{items}</ol>')
     return (frontmatter("es", "alemau", "Resumen diario para devs de todo el mundo — GitHub, Hacker News, dev.to, Medium y blogs. Em português e in English.", {})
-            + cromo(inicio="./", prompt='<span class="p">~</span> $ ls', langs=langs_html(None, "./{o}/"),
+            + cromo(inicio="/", prompt='<span class="p">~</span> $ ls', langs=langs_html(None, "/{o}/"),
                     tema=t["tema"], idioma=t["idioma"], cuerpo=sin_popover(cuerpo), archivo="README.md", lang="es", pie=t["pie"]))
 
 
 def inicio_idioma(lang: str) -> str:
     t = T[lang]
-    items = (entrada("diario/", "git log", t["diario"], "./diario/", t["diario_d"],
-                     f'<span class="src">diario/</span><a href="./diario/">{esc(t["hoy"])}</a>', primero=True)
-             + entrada("sobre.md", "cat", t["sobre"], "./sobre", t["sobre_d"],
-                       f'<span class="src">sobre.md</span><a href="./sobre">{esc(t["leer"])}</a>'))
+    items = (entrada("diario/", "git log", t["diario"], f"/{lang}/diario/", t["diario_d"],
+                     f'<span class="src">diario/</span><a href="/{lang}/diario/">{esc(t["hoy"])}</a>', primero=True)
+             + entrada("sobre.md", "cat", t["sobre"], f"/{lang}/sobre", t["sobre_d"],
+                       f'<span class="src">sobre.md</span><a href="/{lang}/sobre">{esc(t["leer"])}</a>'))
     cuerpo = (f'<section class="release"><span class="tag">~/{lang}</span><h1>{esc(NOMBRE[lang])}</h1>'
               f'<p>{esc(t["lema"])}</p></section><ol class="log">{items}</ol>')
     otros = {o: f"{o}/index" for o in LANGS if o != lang}
     return (frontmatter(lang, NOMBRE[lang], t["lema"], otros)
-            + cromo(inicio="../", prompt=f'<span class="p">~/{lang}</span> $ ls', langs=langs_html(lang, "../{o}/"),
+            + cromo(inicio="/", prompt=f'<span class="p">~/{lang}</span> $ ls', langs=langs_html(lang, "/{o}/"),
                     tema=t["tema"], idioma=t["idioma"], cuerpo=sin_popover(cuerpo), archivo=f"{lang}/", lang=lang, pie=t["pie"]))
 
 
@@ -154,7 +154,7 @@ def sobre(lang: str) -> str:
               f'<p>{esc(t["sobre_d"])}</p></section>\n\n<div class="doc">\n\n{SOBRE[lang]}\n\n</div>')
     otros = {o: f"{o}/sobre" for o in LANGS if o != lang}
     return (frontmatter(lang, t["sobre"], t["sobre_d"], otros)
-            + cromo(inicio="../", prompt=f'<span class="p">~/{lang}</span> $ cat sobre.md', langs=langs_html(lang, "../{o}/sobre"),
+            + cromo(inicio="/", prompt=f'<span class="p">~/{lang}</span> $ cat sobre.md', langs=langs_html(lang, "/{o}/sobre"),
                     tema=t["tema"], idioma=t["idioma"], cuerpo=cuerpo, archivo=f"{lang}/sobre.md", lang=lang, pie=t["pie"]))
 
 
@@ -163,15 +163,15 @@ def indice_diario(lang: str, dias: list[tuple[str, str]] | None = None) -> str:
     generador en cada publicación; sin días queda solo la cabecera)."""
     t = T[lang]
     lista = "".join(
-        entrada(d[5:], "release", f'{t["diario"]} — {d}', f"./{d}", desc,
-                f'<span class="src">v{d.replace("-", ".")}</span><a href="./{d}">{esc(t["leer"])}</a>', primero=(i == 0))
+        entrada(d[5:], "release", f'{t["diario"]} — {d}', f"/{lang}/diario/{d}", desc,
+                f'<span class="src">v{d.replace("-", ".")}</span><a href="/{lang}/diario/{d}">{esc(t["leer"])}</a>', primero=(i == 0))
         for i, (d, desc) in enumerate(dias or []))
     cuerpo = (f'<section class="release"><span class="tag">diario/</span><h1>{esc(t["diario"])}</h1>'
-              f'<p>{esc(t["diario_txt"])}</p><div class="stat"><b>{len(dias or [])} releases</b> · <a href="./feed.xml">RSS</a></div></section>'
+              f'<p>{esc(t["diario_txt"])}</p><div class="stat"><b>{len(dias or [])} releases</b> · <a href="/{lang}/diario/feed.xml">RSS</a></div></section>'
               + (f'<ol class="log">{lista}</ol>' if lista else ""))
     otros = {o: f"{o}/diario/index" for o in LANGS if o != lang}
     return (frontmatter(lang, t["diario"], t["diario_d"], otros)
-            + cromo(inicio="../../", prompt=f'<span class="p">~/{lang}/diario</span> $ git log --oneline', langs=langs_html(lang, "../../{o}/diario/"),
+            + cromo(inicio="/", prompt=f'<span class="p">~/{lang}/diario</span> $ git log --oneline', langs=langs_html(lang, "/{o}/diario/"),
                     tema=t["tema"], idioma=t["idioma"], cuerpo=sin_popover(cuerpo), archivo=f"{lang}/diario/", lang=lang, pie=t["pie"]))
 
 
