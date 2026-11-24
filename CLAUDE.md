@@ -14,7 +14,7 @@ Blog público y trilingüe (es principal, pt, en) de Juan Alemau sobre tecnolog�
 - Commits con el email noreply de GitHub; nunca el email personal.
 
 ## Agentes del proyecto (`.claude/agents/`)
-`product-owner` (prioridades/alcance) · `ux-designer` (navegación, lectura, marca) · `especialista-quartz` (mejoras técnicas del generador) · `seguranca-ciber` (seguridad y privacidad) · `arquitecto-fullstack` (arquitectura y decisiones técnicas) · `documentador` (docs y revisión de textos) · `especialista-ia` (contenido de IA) · `reporter-blog` (redacción de artículos).
+`product-owner` (prioridades/alcance) · `ux-designer` (navegación, lectura, marca) · `especialista-quartz` (mejoras técnicas del generador) · `seguranca-ciber` (seguridad y privacidad) · `arquitecto-fullstack` (arquitectura y decisiones técnicas) · `documentador` (docs y revisión de textos) · `especialista-ia` (contenido de IA) · `reporter-blog` (redacción de artículos) · `marketing-dev` (nombre de producto, crecimiento en GitHub y lanzamiento, sin spam).
 Decisiones registradas en `docs/proyecto/decisiones.md`.
 
 ## graphify
