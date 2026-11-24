@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>alemau — B · jornal</title>
+<style>
+@font-face{font-family:"Unbounded";src:url("../../../quartz/static/fonts/unbounded-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Unbounded";src:url("../../../quartz/static/fonts/unbounded-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Unbounded";src:url("../../../quartz/static/fonts/unbounded-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../../../quartz/static/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../../../quartz/static/fonts/ibm-plex-sans-latin-400-italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"IBM Plex Sans";src:url("../../../quartz/static/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../../../quartz/static/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("../../../quartz/static/fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");font-weight:600;font-display:swap}
+
+/* Direção B — "A Gazeta do Dev": jornal impresso, colunas com fio, manchete do dia. */
+:root{
+  --paper:#f6f3ec; --ink:#161A44; --ink-2:#33375e; --muted:#5c6080; --rule:#161A44; --hair:#cfcabd;
+  --red:#C8102E; --gold:#8C6200; --gold-fill:#E5A11C;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --head:"Unbounded",var(--sans);
+}
+@media (prefers-color-scheme: dark){
+  :root{--paper:#10132f;--ink:#eef0fb;--ink-2:#c9cce3;--muted:#8a8fb0;--rule:#eef0fb;--hair:#2f3466;--red:#F0566B;--gold:#E5A11C}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--sans)}
+a{color:inherit;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-color:var(--red)}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:8px;background:var(--ink);color:var(--paper);padding:6px 10px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+
+/* ── faixa superior ─────────────────────────────────── */
+.strip{border-bottom:1px solid var(--hair);font:400 12px/1 var(--mono);color:var(--muted)}
+.strip .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.strip nav{display:flex}
+.strip nav a{padding:14px 10px;text-decoration:none;text-transform:uppercase;letter-spacing:.08em}
+.strip nav a[aria-current]{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px var(--red)}
+
+/* ── cabeçalho (masthead) ───────────────────────────── */
+.mast{padding:28px 0 0;text-align:center}
+.mast .name{display:inline-flex;align-items:center;gap:clamp(10px,1.6vw,22px);text-decoration:none}
+.mast svg{width:clamp(34px,5vw,62px);height:auto}
+.mast .name span{font:700 clamp(48px,9.5vw,128px)/.9 var(--head);letter-spacing:-.045em}
+.tagline{margin:12px 0 0;font:400 14px/1.4 var(--sans);font-style:italic;color:var(--ink-2)}
+.dateline{margin-top:20px;border-top:3px solid var(--rule);border-bottom:1px solid var(--rule);padding:8px 0;display:flex;justify-content:space-between;gap:12px;font:600 12px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.dateline span:nth-child(2){color:var(--red)}
+
+/* ── capa ───────────────────────────────────────────── */
+.front{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:0 32px;padding:32px 0 8px}
+.lead{grid-column:1/9;padding-right:32px;border-right:1px solid var(--hair)}
+.kicker{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--red)}
+.lead h1{margin:12px 0 0;font:700 clamp(30px,4.2vw,56px)/1.02 var(--head);letter-spacing:-.035em;text-wrap:balance}
+.lead h1 a{text-decoration:none}
+.deck{margin:18px 0 0;font:400 20px/1.45 var(--sans);color:var(--ink-2);max-width:40ch}
+.lead .cols{margin-top:22px;columns:2;column-gap:28px;column-rule:1px solid var(--hair)}
+.lead .cols p{margin:0 0 12px}
+.lead .cols p:first-child::first-letter{float:left;font:700 54px/.85 var(--head);margin:4px 8px 0 0;color:var(--red)}
+.pull{break-inside:avoid;margin:4px 0 12px;padding:10px 0;border-top:2px solid var(--gold-fill);border-bottom:1px solid var(--hair);font:400 18px/1.4 var(--sans);font-style:italic}
+.pull b{display:block;font:600 11px/1 var(--mono);font-style:normal;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:6px}
+.byline{font:400 13px/1.6 var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.byline b{color:var(--ink);font-weight:600}
+.byline a{display:inline-block;padding:2px 0}
+
+/* placar à direita */
+.board{grid-column:9/13}
+.board h2{margin:0 0 4px;font:600 13px/1 var(--mono);text-transform:uppercase;letter-spacing:.1em;padding-bottom:10px;border-bottom:3px double var(--rule)}
+.board ol{list-style:none;margin:0;padding:0}
+.board li{display:grid;grid-template-columns:4.2em 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--hair);align-items:baseline}
+.board .num{font:700 20px/1 var(--head);letter-spacing:-.03em;text-align:right}
+.board .num small{display:block;font:400 11px/1.4 var(--mono);letter-spacing:0;color:var(--muted)}
+.board a{font-weight:600;line-height:1.35;text-decoration:none}
+.board a:hover{text-decoration:underline}
+.board .note{margin:14px 0 0;font:400 13px/1.5 var(--sans);font-style:italic;color:var(--muted)}
+
+/* ── secção: demais notícias ────────────────────────── */
+.sec{display:flex;align-items:center;gap:14px;margin:36px 0 0;font:600 13px/1 var(--mono);text-transform:uppercase;letter-spacing:.12em}
+.sec::after{content:"";flex:1;border-top:1px solid var(--rule)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:16px}
+.story{padding:18px 24px 26px;border-left:1px solid var(--hair)}
+.story:nth-child(3n+1){border-left:0;padding-left:0}
+.story:nth-child(3n){padding-right:0}
+.story:nth-child(n+4){border-top:1px solid var(--hair)}
+.story .no{font:700 34px/1 var(--head);color:var(--red);letter-spacing:-.04em}
+.story h3{margin:10px 0 0;font:600 20px/1.22 var(--head);letter-spacing:-.025em;text-wrap:balance}
+.story h3 a{text-decoration:none}
+.story h3 a:hover{text-decoration:underline}
+.story p{margin:10px 0 0;color:var(--ink-2)}
+.story .why{margin-top:12px;padding-left:12px;border-left:3px solid var(--gold-fill);font-style:italic;color:var(--ink)}
+.story .byline{margin-top:14px}
+
+footer{margin:40px 0 0;padding:18px 0 48px;border-top:3px solid var(--rule);font:400 13px/1.6 var(--sans);color:var(--muted);display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer p{margin:0;max-width:70ch}
+footer nav a{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-left:16px;display:inline-block;padding:12px 0}
+
+/* ── tablet ─────────────────────────────────────────── */
+@media (max-width:980px){
+  .lead{grid-column:1/-1;padding-right:0;border-right:0}
+  .board{grid-column:1/-1;margin-top:28px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .story,.story:nth-child(n){padding:18px 20px 24px;border-left:1px solid var(--hair);border-top:1px solid var(--hair)}
+  .story:nth-child(odd){border-left:0;padding-left:0}
+  .story:nth-child(even){padding-right:0}
+  .story:nth-child(-n+2){border-top:0}
+}
+/* ── mobile ─────────────────────────────────────────── */
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .strip .wrap>span{display:none}
+  .strip .wrap{justify-content:center}
+  .mast{padding-top:20px}
+  .dateline{font-size:11px}
+  .dateline span:last-child{display:none}
+  .front{padding-top:24px}
+  .deck{font-size:18px}
+  .lead .cols{columns:1}
+  .grid{grid-template-columns:1fr}
+  .story,.story:nth-child(n){padding:18px 0 22px;border-left:0;border-top:1px solid var(--hair)}
+  .story:first-child{border-top:0}
+  .story{display:grid;grid-template-columns:auto 1fr;gap:0 14px}
+  .story .no{font-size:26px;grid-row:1/6}
+  .story>*:not(.no){grid-column:2}
+  .story h3{margin-top:0;font-size:18px}
+  footer nav a{margin:0 16px 0 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#capa">Pular para a manchete</a>
+
+<div class="strip">
+  <div class="wrap">
+    <span>Resumo diário para devs · edição automática 06:00 BRT</span>
+    <nav aria-label="Idioma">
+      <a href="#" hreflang="es" lang="es">Español</a>
+      <a href="#" aria-current="page">Português</a>
+      <a href="#" hreflang="en" lang="en">English</a>
+    </nav>
+  </div>
+</div>
+
+<header class="wrap mast">
+  <a class="name" href="#" aria-label="alemau — início">
+    <svg viewBox="0 0 5 6" aria-hidden="true"><g fill="currentColor"><rect x="2" y="0" width=".92" height=".92"/><rect x="1" y="1" width=".92" height=".92"/><rect x="3" y="1" width=".92" height=".92"/><rect x="1" y="2" width=".92" height=".92"/><rect x="3" y="2" width=".92" height=".92"/><rect x="0" y="3" width=".92" height=".92"/><rect x="1" y="3" width=".92" height=".92"/><rect x="3" y="3" width=".92" height=".92"/><rect x="4" y="3" width=".92" height=".92"/><rect x="0" y="4" width=".92" height=".92"/><rect x="4" y="4" width=".92" height=".92"/><rect x="0" y="5" width=".92" height=".92"/><rect x="4" y="5" width=".92" height=".92"/></g><rect x="2" y="3" width=".92" height=".92" fill="var(--red)"/></svg>
+    <span>alemau</span>
+  </a>
+  <p class="tagline">O que importa no código hoje — em dez notícias, três idiomas.</p>
+  <div class="dateline">
+    <span>Terça, 24 nov 2026</span>
+    <span>Edição nº 2</span>
+    <span>10 notícias · ~6 min</span>
+  </div>
+</header>
+
+<main class="wrap" id="capa">
+  <div class="front">
+    <article class="lead">
+      <div class="kicker">Manchete · navegadores</div>
+      <h1><a href="https://ladybird.org/posts/alpha/">Ladybird sai da garagem: primeiro alfa de um navegador com motor feito do zero</a></h1>
+      <p class="deck">Binários para macOS e Linux, sem Chromium, sem WebKit, sem Gecko.</p>
+      <div class="cols">
+        <p>O projeto Ladybird disponibilizou seus primeiros binários alfa para macOS e Linux, construídos sobre um motor próprio feito do zero. É a primeira vez em anos que um motor independente chega a um estágio testável pelo público.</p>
+        <aside class="pull"><b>Por que importa</b>Devs web podem testar um motor independente e enviar relatórios de compatibilidade.</aside>
+        <p>Foi o item mais discutido do dia no Hacker News, com mais de 1.500 pontos e 367 comentários.</p>
+      </div>
+      <div class="byline"><span>Fonte <b>Hacker News</b></span><span><b>1551</b> pts · <b>367</b> coment.</span><a href="https://news.ycombinator.com/item?id=50614249">discussão</a><a href="#">reportar erro</a></div>
+    </article>
+
+    <aside class="board" aria-labelledby="placar">
+      <h2 id="placar">Placar do dia</h2>
+      <ol>
+        <li><span class="num">3.2k<small>estrelas</small></span><a href="#n2">fast-anything: Rust só onde dói</a></li>
+        <li><span class="num">2.3k<small>estrelas</small></span><a href="#n3">xnulinux: XNU como módulo do Linux</a></li>
+        <li><span class="num">1551<small>pontos</small></span><a href="#capa">Ladybird alfa</a></li>
+        <li><span class="num">907<small>pontos</small></span><a href="#n4">Referência AArch64 vai sair do ar</a></li>
+        <li><span class="num">268<small>pontos</small></span><a href="#n5">Stalwart contra o Exchange</a></li>
+      </ol>
+      <p class="note">Estrelas vêm do GitHub, pontos do Hacker News. Não são comparáveis entre si — cada um mede a sua comunidade.</p>
+    </aside>
+  </div>
+
+  <h2 class="sec">Demais notícias</h2>
+  <div class="grid">
+    <article class="story" id="n2">
+      <span class="no" aria-hidden="true">02</span>
+      <h3><a href="https://github.com/EL4CTEO/fast-anything">fast-anything reescreve em Rust só as funções lentas</a></h3>
+      <p>Perfila apps em Python, Node ou Ruby, acha os 5% mais lentos e porta só esses métodos com um agente de código.</p>
+      <p class="why">Desempenho sem reescrever o projeto.</p>
+      <div class="byline"><span><b>GitHub</b></span><span><b>3218</b> ★ · Rust</span><a href="#">reportar erro</a></div>
+    </article>
+    <article class="story" id="n3">
+      <span class="no" aria-hidden="true">03</span>
+      <h3><a href="https://github.com/AFK-surf/xnulinux">O kernel do macOS, rodando como módulo do Linux</a></h3>
+      <p>xnulinux compila o XNU open-source como <code>xnu.ko</code> para um kernel Linux arm64 sem modificações.</p>
+      <p class="why">Processos do macOS ao lado do Linux, sem hipervisor.</p>
+      <div class="byline"><span><b>GitHub</b></span><span><b>2298</b> ★ · Obj-C++</span><a href="#">reportar erro</a></div>
+    </article>
+    <article class="story" id="n4">
+      <span class="no" aria-hidden="true">04</span>
+      <h3><a href="https://arm.jonpalmisc.com/">Arm pede, e a referência AArch64 sai do ar</a></h3>
+      <p>O site não oficial de instruções e registros Armv8-A e Armv9-A encerra em 4 de dezembro após notificação jurídica.</p>
+      <p class="why">Afeta quem escreve compiladores e assembly.</p>
+      <div class="byline"><span><b>Hacker News</b></span><span><b>907</b> pts · 210 coment.</span><a href="#">reportar erro</a></div>
+    </article>
+    <article class="story" id="n5">
+      <span class="no" aria-hidden="true">05</span>
+      <h3><a href="https://stalw.art/blog/microsoft-exchange-replacement/">Stalwart 1.2.0 quer o lugar do Exchange</a></h3>
+      <p>MAPI via HTTP, Exchange Web Services, ActiveSync e Autodiscover para Outlook e Apple Mail.</p>
+      <p class="why">E-mail open-source sem trocar de cliente.</p>
+      <div class="byline"><span><b>Hacker News</b></span><span><b>268</b> pts · 136 coment.</span><a href="#">reportar erro</a></div>
+    </article>
+    <article class="story" id="n6">
+      <span class="no" aria-hidden="true">06</span>
+      <h3><a href="https://github.com/zed-industries/gpui">GPUI deixa o Zed e ganha casa própria</a></h3>
+      <p>O framework de UI acelerado por GPU, em Rust, agora vive num repositório dedicado.</p>
+      <p class="why">Apps de desktop em Rust com a arquitetura do Zed.</p>
+      <div class="byline"><span><b>Hacker News</b></span><span><b>167</b> pts · 58 coment.</span><a href="#">reportar erro</a></div>
+    </article>
+    <article class="story" id="n7">
+      <span class="no" aria-hidden="true">07</span>
+      <h3><a href="https://herbsutter.com/2026/11/21/c26-is-done-again-trip-report-november-2026-iso-c-standards-meeting-buzios-brazil/">C++26 fecha de novo — desta vez em Búzios</a></h3>
+      <p>O comitê ISO C++ concluiu outra vez o trabalho técnico após resolver os comentários sobre contratos.</p>
+      <p class="why">O status final da próxima versão da linguagem.</p>
+      <div class="byline"><span><b>Hacker News</b></span><span><b>107</b> pts · 114 coment.</span><a href="#">reportar erro</a></div>
+    </article>
+  </div>
+
+  <footer>
+    <p>Edição gerada automaticamente com IA a partir de fontes públicas (APIs e RSS oficiais). Cada notícia leva ao original; o conteúdo pertence aos autores. Pode conter erros — use “reportar erro”.</p>
+    <nav aria-label="Edições"><a href="#">← Edição anterior</a><a href="#">Arquivo</a><a href="#">RSS</a></nav>
+  </footer>
+</main>
+</body>
+</html>
