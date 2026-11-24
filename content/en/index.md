@@ -1,4 +1,5 @@
 ---
+lang: en
 title: English
 description: Technology, software, hardware and AI explained with clear examples.
 ---
