@@ -18,10 +18,13 @@ Un archivo por idioma con el mismo nombre en `content/es/<sección>/`, `content/
 title: "…"
 description: "1 frase para buscadores y redes"
 date: AAAA-MM-DD
+lang: es            # pt / en según la carpeta
+publish: true       # obligatorio: sin esto no se publica (explicit-publish)
 tags: [ia, software]
 translations: { es: "[[es/…]]", pt: "[[pt/…]]", en: "[[en/…]]" }
 ---
 ```
+Debajo del frontmatter, una línea de idioma con enlaces relativos, p. ej. `**Idioma:** ES · [PT](../../pt/<sección>/<archivo>) · [EN](../../en/<sección>/<archivo>)`.
 Las versiones pt y en se adaptan (expresiones naturales), no se traducen literalmente. Al final, una sección "Fuentes".
 
 Al proponer el commit: `feat(contenido): <título corto>` (Conventional Commits 1.0.0).

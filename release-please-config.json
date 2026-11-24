@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "47b4196c22352a20fd66f3954197d8ba11c16f5a",
   "packages": {
     ".": {
       "release-type": "simple",
@@ -8,17 +9,56 @@
       "include-component-in-tag": false,
       "bump-minor-pre-major": true,
       "changelog-sections": [
-        { "type": "feat", "section": "Novedades" },
-        { "type": "fix", "section": "Correcciones" },
-        { "type": "perf", "section": "Rendimiento" },
-        { "type": "docs", "section": "Documentación" },
-        { "type": "revert", "section": "Reversiones" },
-        { "type": "chore", "section": "Mantenimiento", "hidden": true },
-        { "type": "ci", "section": "CI", "hidden": true },
-        { "type": "build", "section": "Build", "hidden": true },
-        { "type": "refactor", "section": "Refactor", "hidden": true },
-        { "type": "style", "section": "Estilo", "hidden": true },
-        { "type": "test", "section": "Pruebas", "hidden": true }
+        {
+          "type": "feat",
+          "section": "Novedades"
+        },
+        {
+          "type": "fix",
+          "section": "Correcciones"
+        },
+        {
+          "type": "perf",
+          "section": "Rendimiento"
+        },
+        {
+          "type": "docs",
+          "section": "Documentación"
+        },
+        {
+          "type": "revert",
+          "section": "Reversiones"
+        },
+        {
+          "type": "chore",
+          "section": "Mantenimiento",
+          "hidden": true
+        },
+        {
+          "type": "ci",
+          "section": "CI",
+          "hidden": true
+        },
+        {
+          "type": "build",
+          "section": "Build",
+          "hidden": true
+        },
+        {
+          "type": "refactor",
+          "section": "Refactor",
+          "hidden": true
+        },
+        {
+          "type": "style",
+          "section": "Estilo",
+          "hidden": true
+        },
+        {
+          "type": "test",
+          "section": "Pruebas",
+          "hidden": true
+        }
       ]
     }
   }

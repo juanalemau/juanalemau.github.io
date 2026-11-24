@@ -12,8 +12,8 @@ configuration:
     - templates
     - .obsidian
   theme:
-    fontOrigin: googleFonts
-    cdnCaching: true
+    fontOrigin: local
+    cdnCaching: false
     typography:
       header: Unbounded
       body: IBM Plex Sans
@@ -77,11 +77,13 @@ plugins:
     layout:
       position: right
       priority: 30
+      display: desktop-only
+      condition: has-toc
   - source: "@quartz-community/description"
     enabled: true
     order: 70
   - source: "@quartz-community/latex"
-    enabled: true
+    enabled: false
     options:
       renderEngine: katex
     order: 80
@@ -96,13 +98,18 @@ plugins:
     order: 92
   - source: "@quartz-community/quartz-fonts"
     enabled: true
+    options:
+      fontOrigin: local
+      header: '"Unbounded", sans-serif'
+      body: '"IBM Plex Sans", sans-serif'
+      code: '"IBM Plex Mono", monospace'
   - source: "@quartz-themes/core"
     enabled: false
     options:
       theme: tokyo-night
       mode: both
   - source: "@quartz-community/explicit-publish"
-    enabled: false
+    enabled: true
   - source: "@quartz-community/unlisted-pages"
     enabled: true
     options: {}
@@ -133,11 +140,13 @@ plugins:
     enabled: true
   - source: "@quartz-community/explorer"
     enabled: true
+    options:
+      folderDefaultState: collapsed
     layout:
       position: left
       priority: 50
   - source: "@quartz-community/graph"
-    enabled: true
+    enabled: false
     layout:
       position: right
       priority: 10
@@ -150,7 +159,7 @@ plugins:
       groupOptions:
         grow: true
   - source: "@quartz-community/backlinks"
-    enabled: true
+    enabled: false
     layout:
       position: right
       priority: 50
@@ -219,11 +228,12 @@ plugins:
       links:
         GitHub: https://github.com/juanalemau
         Quartz (MIT): https://github.com/jackyzha0/quartz
+        Contenido CC BY 4.0: https://creativecommons.org/licenses/by/4.0/deed.es
     layout:
       position: footer
       priority: 50
   - source: "@quartz-community/recent-notes"
-    enabled: true
+    enabled: false
     options:
       title: Recientes
       limit: 5
@@ -249,9 +259,7 @@ plugins:
     options:
       includeAll: false
       includedProperties:
-        - description
         - tags
-        - aliases
       excludedProperties: []
       hidePropertiesView: false
     order: 5
