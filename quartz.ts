@@ -1,4 +1,4 @@
-import { h } from "preact"
+import { Fragment, h } from "preact"
 import { loadQuartzConfig, loadQuartzLayout } from "./quartz/plugins/loader/config-loader"
 
 const config = await loadQuartzConfig()
@@ -19,6 +19,28 @@ const csp = [
   "form-action 'self'",
 ].join("; ")
 
+// alemau: <link rel="alternate" hreflang> entre las versiones es/pt/en de la misma página y RSS por idioma.
+const IDIOMAS = ["es", "pt", "en"]
+const SITIO = "https://juanalemau.github.io"
+const alternos = (pagina: { slug?: string }) => {
+  const slug = pagina.slug ?? ""
+  const partes = slug.split("/")
+  const lang = IDIOMAS.includes(partes[0]) ? partes[0] : null
+  const resto = lang ? partes.slice(1).join("/") : ""
+  const ruta = (l: string) => `${SITIO}/${l}/${resto.replace(/(^|\/)index$/, "")}`
+  return h(
+    Fragment,
+    null,
+    ...(lang || slug === "index"
+      ? [
+          ...IDIOMAS.map((l) => h("link", { rel: "alternate", hreflang: l, href: ruta(l) })),
+          h("link", { rel: "alternate", hreflang: "x-default", href: `${SITIO}/` }),
+        ]
+      : []),
+    lang ? h("link", { rel: "alternate", type: "application/rss+xml", title: `alemau (${lang})`, href: `${SITIO}/${lang}/diario/feed.xml` }) : null,
+  )
+}
+
 config.plugins.transformers.push({
   name: "AlemauSecurityHead",
   externalResources: () => ({
@@ -27,6 +49,7 @@ config.plugins.transformers.push({
       h("meta", { name: "referrer", content: "strict-origin-when-cross-origin" }),
       // atajos de teclado del resumen diario (archivo propio, servido desde 'self')
       h("script", { src: "/static/js/atajos.js", defer: true }),
+      alternos,
     ],
   }),
 })
