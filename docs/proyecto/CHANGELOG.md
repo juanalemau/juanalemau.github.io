@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/juanalemau/juanalemau.github.io/compare/v0.3.0...v0.3.1) (2026-11-24)
+
+
+### Correcciones
+
+* **ci:** no fallar la vista previa cuando el resumen del día ya existe ([#34](https://github.com/juanalemau/juanalemau.github.io/issues/34)) ([2826607](https://github.com/juanalemau/juanalemau.github.io/commit/2826607865b32dc319f51315854b26c53437f536)), closes [#33](https://github.com/juanalemau/juanalemau.github.io/issues/33)
+
 ## [0.3.0](https://github.com/juanalemau/juanalemau.github.io/compare/v0.2.0...v0.3.0) (2026-11-24)
 
 
